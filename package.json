@@ -1,0 +1,22 @@
+{
+  "name": "zrc",
+  "type": "module",
+  "version": "0.1.0",
+  "description": "The Zirco compiler",
+  "main": "dist/index.js",
+  "scripts": {
+    "clean": "rm -rf dist/",
+    "tsc": "tsc",
+    "build": "yarn run clean; yarn run tsc",
+    "start": "yarn run build && node .",
+    "prettier": "prettier . -w"
+  },
+  "repository": "https://github.com/zirco-lang/zrc.git",
+  "author": "LogN",
+  "license": "GPL-3.0",
+  "private": false,
+  "devDependencies": {
+    "prettier": "^2.8.1",
+    "typescript": "^4.9.4"
+  }
+}
