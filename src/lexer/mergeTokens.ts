@@ -37,6 +37,7 @@ export default function mergeTokens(input: PositionedString[]): Token[] {
         if (value[0] === '"') {
             let start = value[1].start;
             // value will now point to the NEXT character.
+            if ((i+1) >= input.length) throw new Error('Unexpected end of file');
             value = input[++i];
             let string = '';
             while (value[0] !== '"') {
@@ -48,14 +49,16 @@ export default function mergeTokens(input: PositionedString[]): Token[] {
                     // by a double-quote. For this reason, we first add
                     // the escape:
                     string += value[0];
-                    // and if it's a double-quote following, we add that too.
+                    
+                    if ((i+1) >= input.length) throw new Error('Unexpected end of file')
                     value = input[++i];
-                    if (value[0] === '"') string += value[0];
+                    string += value[0];
                 } else {
                     // Otherwise, we can add the character to the string.
                     string += value[0];
                 }
                 // value will now point to the NEXT character.
+                if ((i+1) >= input.length) throw new Error('Unexpected end of file')
                 value = input[++i];
             }
             // The ending character we sit on is the end of the string.
@@ -75,17 +78,19 @@ export default function mergeTokens(input: PositionedString[]): Token[] {
                 if (value[0] === 'x' || value[0] === 'b') {
                     constant += value[0];
                     value = input[++i];
-                    while (/[0-9a-fA-F]/.test(value[0])) {
+                    while (value && /[0-9a-fA-F]/.test(value[0])) {
                         constant += value[0];
                         value = input[++i];
                     }
                 } else {
-                    while (/[0-9]/.test(value[0])) {
+                    while (value && /[0-9]/.test(value[0])) {
                         constant += value[0];
                         value = input[++i];
                     }
                 }
             }
+            // i tink this causes a loop of infinity so lets not
+            // value = input[--i];
             // The ending character we sit on is the end of the constant.
             // We can now add the constant to the output.
             output.push([constant, { type: TokenTypes.CONSTANT_NUMBER, position: { start, end: value[1].end } }]);
@@ -96,10 +101,12 @@ export default function mergeTokens(input: PositionedString[]): Token[] {
         if (/[a-zA-Z_]/.test(value[0])) {
             let start = value[1].start;
             let identifier = value[0];
-            value = input[++i];
-            while (/[a-zA-Z0-9_]/.test(value[0])) {
-                identifier += value[0];
+            if (input[i + 1]) {
                 value = input[++i];
+                while (/[a-zA-Z0-9_]/.test(value[0])) {
+                    identifier += value[0];
+                    value = input[++i];
+                }
             }
             // The ending character we sit on is the end of the identifier.
             // We can now add the identifier to the output.

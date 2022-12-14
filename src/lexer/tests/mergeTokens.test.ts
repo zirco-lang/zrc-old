@@ -22,23 +22,24 @@ describe('mergeTokens', () => {
                 ])
             ).toEqual([['"a"', { type: TokenTypes.STRING, position: { start: 0, end: 3 } }]]));
         describe('strings with weird traits', () => {
-            it('errors on single-quoted string', () =>
-                expect(() =>
-                    mergeTokens([
-                        ["'", { start: 0, end: 1 }],
-                        ['a', { start: 1, end: 2 }],
-                        ["'", { start: 2, end: 3 }]
-                    ])
-                ).toThrow('Unexpected single-quote'));
             it('errors on string with no end', () => expect(() => mergeTokens([['"', { start: 0, end: 1 }]])).toThrow('Unexpected end of file'));
-            it('works with escaped quote', () =>
-                expect(
+            it('escaped EOF', () =>
+                expect(() =>
                     mergeTokens([
                         ['"', { start: 0, end: 1 }],
                         ['\\', { start: 1, end: 2 }],
                         ['"', { start: 2, end: 3 }]
                     ])
-                ).toEqual([['"\\""', { type: TokenTypes.STRING, position: { start: 0, end: 3 } }]]));
+                ).toThrow('Unexpected end of file'));
+            it('works with escaped quote', () =>
+                expect(
+                    mergeTokens([
+                        ['"', { start: 0, end: 1 }],
+                        ['\\', { start: 1, end: 2 }],
+                        ['"', { start: 2, end: 3 }],
+                        ['"', { start: 3, end: 4 }]
+                    ])
+                ).toEqual([['"\\""', { type: TokenTypes.STRING, position: { start: 0, end: 4 } }]]));
         });
         describe('numerical constant types', () => {
             it('classifies a decimal number as a constant', () =>
