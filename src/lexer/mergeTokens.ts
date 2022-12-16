@@ -1,5 +1,23 @@
-import { PositionedString, StringPosition } from './strSplit';
+/**
+ * zrc - the Zirco compiler
+ * Copyright (C) 2022  LogN
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ */
+
 import ZircoSyntaxError, { ZircoSyntaxErrorTypes } from '../lib/structures/errors/ZircoSyntaxError';
+import type { PositionedString, StringPosition } from './strSplit';
 
 /** Represents all possible types for a Token. */
 export enum TokenTypes {
@@ -44,7 +62,7 @@ export default function mergeTokens(input: PositionedString[]): Token[] {
         // If the first character is a ", then we know it's a string.
         if (value[0] === '"') {
             let str = '';
-            let start = value[1].start;
+            const start = value[1].start;
 
             if (i + 1 >= input.length)
                 throw new ZircoSyntaxError(ZircoSyntaxErrorTypes.LEXER_STRING_UNCLOSED, {
@@ -81,7 +99,7 @@ export default function mergeTokens(input: PositionedString[]): Token[] {
         // We only support 0b and 0d prefixes, so we can first check for a 0.
         if (value[0] === '0' && i + 1 < input.length && (input[i + 1][0] === 'b' || input[i + 1][0] === 'x')) {
             let str = '0';
-            let start = value[1].start;
+            const start = value[1].start;
             value = input[++i];
             str += value[0];
             if (i + 1 >= input.length)
@@ -105,10 +123,10 @@ export default function mergeTokens(input: PositionedString[]): Token[] {
         // Non-prefixed numbers
         if (/\d/.test(value[0])) {
             let str = '';
-            let start = value[1].start;
+            const start = value[1].start;
             let hasHadDecimal = false;
             // FIXME: Possible for values like 4.1.3 to pass. Needed test case.
-            while (/[\d\.]/.test(value[0])) {
+            while (/[\d.]/.test(value[0])) {
                 if (value[0] === '.') {
                     // to prevent values like 1.2.3 from passing
                     if (hasHadDecimal)
@@ -135,7 +153,7 @@ export default function mergeTokens(input: PositionedString[]): Token[] {
         // They can't start with a number, though.
         if (/[a-zA-Z_]/.test(value[0])) {
             let str = '';
-            let start = value[1].start;
+            const start = value[1].start;
             while (/[a-zA-Z0-9_]/.test(value[0])) {
                 str += value[0];
                 if (i + 1 >= input.length) break;
@@ -161,13 +179,13 @@ export default function mergeTokens(input: PositionedString[]): Token[] {
         for (const op of listOfMCOperators) {
             let didMatch = true;
             if (i + op.length - 1 >= input.length) continue; // We can't match this operator, it's too long.
-            for (let j = 0; j < op.length; j++) {
+            for (let j = 0; j < op.length; j++)
                 // If the current character doesn't match the current operator, then we can skip this operator.
                 if (input[i + j][0] !== op[j]) {
                     didMatch = false;
                     break;
                 }
-            }
+
             if (didMatch) {
                 // We found a match! Let's add it to the output.
                 output.push([op, { type: TokenTypes.OTHER, position: { start: input[i][1].start, end: input[i + op.length - 1][1].end } }]);
