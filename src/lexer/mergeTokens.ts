@@ -71,7 +71,9 @@ export default function mergeTokens(input: PositionedString[]): Token[] {
                     start,
                     end: i + 1
                 });
+
             value = input[++i];
+
             // We need to loop through the string until we find the end.
             while (value[0] !== '"') {
                 if (value[0] === '\\') {
@@ -83,9 +85,12 @@ export default function mergeTokens(input: PositionedString[]): Token[] {
                 }
 
                 str += value[0];
+
                 if (i + 1 >= input.length) throw new ZircoSyntaxError(ZircoSyntaxErrorTypes.LEXER_STRING_UNCLOSED, { start, end: value[1].end });
+
                 value = input[++i];
             }
+
             // We found the end of the string. Let's add it to the output.
             output.push([`"${str}"`, { type: TokenTypes.STRING, position: { start, end: value[1].end } }]);
             continue;
@@ -104,13 +109,18 @@ export default function mergeTokens(input: PositionedString[]): Token[] {
             const start = value[1].start;
             value = input[++i];
             str += value[0];
+
             if (i + 1 >= input.length)
                 throw new ZircoSyntaxError(ZircoSyntaxErrorTypes.LEXER_NUMBER_TYPE_PREFIX_NO_VALUE, { start: value[1].start, end: value[1].end });
+
             const matchReg = value[0] === 'b' ? /[01]/ : /[0-9a-fA-F]/;
+
             while (/[a-zA-Z0-9]/.test(input[i + 1][0])) {
                 value = input[++i];
+
                 if (!matchReg.test(value[0]))
                     throw new ZircoSyntaxError(ZircoSyntaxErrorTypes.LEXER_NUMBER_INVALID_CHARACTER, { start: value[1].start, end: value[1].end });
+
                 str += value[0];
                 if (i + 1 >= input.length) break;
             }
@@ -118,14 +128,17 @@ export default function mergeTokens(input: PositionedString[]): Token[] {
             output.push([str, { type: TokenTypes.CONSTANT_NUMBER, position: { start, end: value[1].end } }]);
             continue;
         }
+
         // Non-prefixed numbers
         if (/\d/.test(value[0])) {
             let str = '';
             const start = value[1].start;
             let hasHadDecimal = false;
+
             while (/[^\s]/.test(value[0])) {
                 if (/[^0-9._]/.test(value[0]))
                     throw new ZircoSyntaxError(ZircoSyntaxErrorTypes.LEXER_NUMBER_INVALID_CHARACTER, { start: value[1].start, end: value[1].end });
+
                 if (value[0] === '.') {
                     // to prevent values like 1.2.3 from passing
                     if (hasHadDecimal)
@@ -135,10 +148,12 @@ export default function mergeTokens(input: PositionedString[]): Token[] {
                         });
                     hasHadDecimal = true;
                 }
+
                 str += value[0];
                 if (i + 1 >= input.length) break;
                 value = input[++i];
             }
+
             if (i + 1 < input.length) value = input[--i]; // We went one too far, so let's go back.
 
             output.push([str, { type: TokenTypes.CONSTANT_NUMBER, position: { start, end: value[1].end } }]);
@@ -151,11 +166,13 @@ export default function mergeTokens(input: PositionedString[]): Token[] {
         if (/[a-zA-Z_]/.test(value[0])) {
             let str = '';
             const start = value[1].start;
+
             while (/[a-zA-Z0-9_]/.test(value[0])) {
                 str += value[0];
                 if (i + 1 >= input.length) break;
                 value = input[++i];
             }
+
             if (i + 1 < input.length) value = input[--i]; // We went one too far, so let's go back.
 
             output.push([str, { type: TokenTypes.NAME, position: { start, end: value[1].end } }]);
@@ -172,7 +189,9 @@ export default function mergeTokens(input: PositionedString[]): Token[] {
         let didMatchAnyOperator = false;
         for (const op of multiCharOperators) {
             let didMatchCurrent = true;
+
             if (i + op.length - 1 >= input.length) continue; // We can't match this operator, it's too long.
+
             for (let j = 0; j < op.length; j++)
                 // If the current character doesn't match the current operator, then we can skip this operator.
                 if (input[i + j][0] !== op[j]) {
