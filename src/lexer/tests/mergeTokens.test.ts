@@ -136,9 +136,45 @@ describe('mergeTokens', () => {
                         ['3', { start: 2, end: 3 }]
                     ])
                 ).toEqual([['1.3', { type: TokenTypes.CONSTANT_NUMBER, position: { start: 0, end: 3 } }]]));
+            it('should error when given a non-binary value in a binary constant', () => {
+                const f = () =>
+                    mergeTokens([
+                        ['0', { start: 0, end: 1 }],
+                        ['b', { start: 1, end: 2 }],
+                        ['2', { start: 2, end: 3 }]
+                    ]);
+                let didThrow = false;
+                try {
+                    f();
+                } catch (e) {
+                    didThrow = true;
+                    expect(e).toBeInstanceOf(ZircoSyntaxError);
+                    expect((e as ZircoSyntaxError).type).toBe(ZircoSyntaxErrorTypes.LEXER_NUMBER_INVALID_CHARACTER);
+                    expect((e as ZircoSyntaxError).position).toEqual({ start: 2, end: 3 });
+                }
+                expect(didThrow).toBe(true);
+            });
+            it('should error given a Z in a hex', () => {
+                const f = () =>
+                    mergeTokens([
+                        ['0', { start: 0, end: 1 }],
+                        ['x', { start: 1, end: 2 }],
+                        ['Z', { start: 2, end: 3 }]
+                    ]);
+                let didThrow = false;
+                try {
+                    f();
+                } catch (e) {
+                    didThrow = true;
+                    expect(e).toBeInstanceOf(ZircoSyntaxError);
+                    expect((e as ZircoSyntaxError).type).toBe(ZircoSyntaxErrorTypes.LEXER_NUMBER_INVALID_CHARACTER);
+                    expect((e as ZircoSyntaxError).position).toEqual({ start: 2, end: 3 });
+                }
+                expect(didThrow).toBe(true);
+            });
         });
-        it('operations are type OTHER', () =>
-            expect(mergeTokens([['+', { start: 0, end: 1 }]])).toEqual([['+', { type: TokenTypes.OTHER, position: { start: 0, end: 1 } }]]));
+        it('operator', () =>
+            expect(mergeTokens([['+', { start: 0, end: 1 }]])).toEqual([['+', { type: TokenTypes.OPERATOR, position: { start: 0, end: 1 } }]]));
     });
     describe('whitespace trimming', () => {
         // In this case, it's expected that multiple spaces are merged and start/end indicate them safely.
@@ -256,7 +292,7 @@ describe('mergeTokens', () => {
                 ])
             ).toEqual([
                 ['a', { type: TokenTypes.NAME, position: { start: 0, end: 1 } }],
-                ['+', { type: TokenTypes.OTHER, position: { start: 1, end: 2 } }],
+                ['+', { type: TokenTypes.OPERATOR, position: { start: 1, end: 2 } }],
                 ['b', { type: TokenTypes.NAME, position: { start: 2, end: 3 } }]
             ]));
         it('whitespace change in token type', () =>
@@ -270,7 +306,7 @@ describe('mergeTokens', () => {
                 ])
             ).toEqual([
                 ['a', { type: TokenTypes.NAME, position: { start: 0, end: 1 } }],
-                ['+', { type: TokenTypes.OTHER, position: { start: 2, end: 3 } }],
+                ['+', { type: TokenTypes.OPERATOR, position: { start: 2, end: 3 } }],
                 ['b', { type: TokenTypes.NAME, position: { start: 4, end: 5 } }]
             ]));
         it('sequential decimals (sequential) should fail', () => {
@@ -367,7 +403,18 @@ describe('mergeTokens', () => {
                 ['a', { type: TokenTypes.NAME, position: { start: 0, end: 1 } }],
                 ['"b"', { type: TokenTypes.STRING, position: { start: 1, end: 4 } }]
             ]));
+
+        it('underscores in numbers', () =>
+            expect(
+                mergeTokens([
+                    ['1', { start: 0, end: 1 }],
+                    ['_', { start: 1, end: 2 }],
+                    ['2', { start: 2, end: 3 }]
+                ])
+            ).toEqual([['1_2', { type: TokenTypes.CONSTANT_NUMBER, position: { start: 0, end: 3 } }]]));
     });
+
+    it.todo('comments');
 
     describe('multi-character operators', () => {
         it('addition assignment', () =>
@@ -376,7 +423,7 @@ describe('mergeTokens', () => {
                     ['+', { start: 0, end: 1 }],
                     ['=', { start: 1, end: 2 }]
                 ])
-            ).toEqual([['+=', { type: TokenTypes.OTHER, position: { start: 0, end: 2 } }]]));
+            ).toEqual([['+=', { type: TokenTypes.OPERATOR, position: { start: 0, end: 2 } }]]));
 
         it('subtraction assignment', () =>
             expect(
@@ -384,7 +431,7 @@ describe('mergeTokens', () => {
                     ['-', { start: 0, end: 1 }],
                     ['=', { start: 1, end: 2 }]
                 ])
-            ).toEqual([['-=', { type: TokenTypes.OTHER, position: { start: 0, end: 2 } }]]));
+            ).toEqual([['-=', { type: TokenTypes.OPERATOR, position: { start: 0, end: 2 } }]]));
 
         it('multiplication assignment', () =>
             expect(
@@ -392,7 +439,7 @@ describe('mergeTokens', () => {
                     ['*', { start: 0, end: 1 }],
                     ['=', { start: 1, end: 2 }]
                 ])
-            ).toEqual([['*=', { type: TokenTypes.OTHER, position: { start: 0, end: 2 } }]]));
+            ).toEqual([['*=', { type: TokenTypes.OPERATOR, position: { start: 0, end: 2 } }]]));
 
         it('division assignment', () =>
             expect(
@@ -400,7 +447,7 @@ describe('mergeTokens', () => {
                     ['/', { start: 0, end: 1 }],
                     ['=', { start: 1, end: 2 }]
                 ])
-            ).toEqual([['/=', { type: TokenTypes.OTHER, position: { start: 0, end: 2 } }]]));
+            ).toEqual([['/=', { type: TokenTypes.OPERATOR, position: { start: 0, end: 2 } }]]));
 
         it('increment', () =>
             expect(
@@ -408,7 +455,7 @@ describe('mergeTokens', () => {
                     ['+', { start: 0, end: 1 }],
                     ['+', { start: 1, end: 2 }]
                 ])
-            ).toEqual([['++', { type: TokenTypes.OTHER, position: { start: 0, end: 2 } }]]));
+            ).toEqual([['++', { type: TokenTypes.OPERATOR, position: { start: 0, end: 2 } }]]));
 
         it('decrement', () =>
             expect(
@@ -416,7 +463,7 @@ describe('mergeTokens', () => {
                     ['-', { start: 0, end: 1 }],
                     ['-', { start: 1, end: 2 }]
                 ])
-            ).toEqual([['--', { type: TokenTypes.OTHER, position: { start: 0, end: 2 } }]]));
+            ).toEqual([['--', { type: TokenTypes.OPERATOR, position: { start: 0, end: 2 } }]]));
 
         it('equality', () =>
             expect(
@@ -424,7 +471,7 @@ describe('mergeTokens', () => {
                     ['=', { start: 0, end: 1 }],
                     ['=', { start: 1, end: 2 }]
                 ])
-            ).toEqual([['==', { type: TokenTypes.OTHER, position: { start: 0, end: 2 } }]]));
+            ).toEqual([['==', { type: TokenTypes.OPERATOR, position: { start: 0, end: 2 } }]]));
 
         it('inequality', () =>
             expect(
@@ -432,7 +479,7 @@ describe('mergeTokens', () => {
                     ['!', { start: 0, end: 1 }],
                     ['=', { start: 1, end: 2 }]
                 ])
-            ).toEqual([['!=', { type: TokenTypes.OTHER, position: { start: 0, end: 2 } }]]));
+            ).toEqual([['!=', { type: TokenTypes.OPERATOR, position: { start: 0, end: 2 } }]]));
 
         it('greater than or equal to', () =>
             expect(
@@ -440,7 +487,7 @@ describe('mergeTokens', () => {
                     ['>', { start: 0, end: 1 }],
                     ['=', { start: 1, end: 2 }]
                 ])
-            ).toEqual([['>=', { type: TokenTypes.OTHER, position: { start: 0, end: 2 } }]]));
+            ).toEqual([['>=', { type: TokenTypes.OPERATOR, position: { start: 0, end: 2 } }]]));
 
         it('less than or equal to', () =>
             expect(
@@ -448,6 +495,46 @@ describe('mergeTokens', () => {
                     ['<', { start: 0, end: 1 }],
                     ['=', { start: 1, end: 2 }]
                 ])
-            ).toEqual([['<=', { type: TokenTypes.OTHER, position: { start: 0, end: 2 } }]]));
+            ).toEqual([['<=', { type: TokenTypes.OPERATOR, position: { start: 0, end: 2 } }]]));
+
+        it('logical and', () =>
+            expect(
+                mergeTokens([
+                    ['&', { start: 0, end: 1 }],
+                    ['&', { start: 1, end: 2 }]
+                ])
+            ).toEqual([['&&', { type: TokenTypes.OPERATOR, position: { start: 0, end: 2 } }]]));
+
+        it('logical or', () =>
+            expect(
+                mergeTokens([
+                    ['|', { start: 0, end: 1 }],
+                    ['|', { start: 1, end: 2 }]
+                ])
+            ).toEqual([['||', { type: TokenTypes.OPERATOR, position: { start: 0, end: 2 } }]]));
+
+        it('bit shift left', () =>
+            expect(
+                mergeTokens([
+                    ['<', { start: 0, end: 1 }],
+                    ['<', { start: 1, end: 2 }]
+                ])
+            ).toEqual([['<<', { type: TokenTypes.OPERATOR, position: { start: 0, end: 2 } }]]));
+
+        it('bit shift right', () =>
+            expect(
+                mergeTokens([
+                    ['>', { start: 0, end: 1 }],
+                    ['>', { start: 1, end: 2 }]
+                ])
+            ).toEqual([['>>', { type: TokenTypes.OPERATOR, position: { start: 0, end: 2 } }]]));
+
+        it('exponent', () =>
+            expect(
+                mergeTokens([
+                    ['*', { start: 0, end: 1 }],
+                    ['*', { start: 1, end: 2 }]
+                ])
+            ).toEqual([['**', { type: TokenTypes.OPERATOR, position: { start: 0, end: 2 } }]]));
     });
 });

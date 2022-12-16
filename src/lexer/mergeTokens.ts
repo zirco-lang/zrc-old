@@ -27,6 +27,8 @@ export enum TokenTypes {
     CONSTANT_NUMBER,
     /** A string. */
     STRING,
+    /** An operator or syntax component */
+    OPERATOR,
     /** Anything else */
     OTHER
 }
@@ -105,18 +107,14 @@ export default function mergeTokens(input: PositionedString[]): Token[] {
             if (i + 1 >= input.length)
                 throw new ZircoSyntaxError(ZircoSyntaxErrorTypes.LEXER_NUMBER_TYPE_PREFIX_NO_VALUE, { start: value[1].start, end: value[1].end });
             const matchReg = value[0] === 'b' ? /[01]/ : /[0-9a-fA-F]/;
-            value = input[++i];
-            // FIXME: Unknown behavior when passed something like 0b01F, should error, might
-            // make new token. Needed test case.
-            while (matchReg.test(value[0])) {
+            while (/[a-zA-Z0-9]/.test(input[i + 1][0])) {
+                value = input[++i];
+                if (!matchReg.test(value[0]))
+                    throw new ZircoSyntaxError(ZircoSyntaxErrorTypes.LEXER_NUMBER_INVALID_CHARACTER, { start: value[1].start, end: value[1].end });
                 str += value[0];
                 if (i + 1 >= input.length) break;
-                value = input[++i];
             }
-            // because of the ++i instruction we need
-            // to undo that so the end is counted correctly. this happens
-            // to occur when followed by another token, so it's critical.
-            if (i + 1 < input.length) value = input[--i];
+
             output.push([str, { type: TokenTypes.CONSTANT_NUMBER, position: { start, end: value[1].end } }]);
             continue;
         }
@@ -125,8 +123,7 @@ export default function mergeTokens(input: PositionedString[]): Token[] {
             let str = '';
             const start = value[1].start;
             let hasHadDecimal = false;
-            // FIXME: Possible for values like 4.1.3 to pass. Needed test case.
-            while (/[\d.]/.test(value[0])) {
+            while (/[\d._]/.test(value[0])) {
                 if (value[0] === '.') {
                     // to prevent values like 1.2.3 from passing
                     if (hasHadDecimal)
@@ -140,10 +137,8 @@ export default function mergeTokens(input: PositionedString[]): Token[] {
                 if (i + 1 >= input.length) break;
                 value = input[++i];
             }
-            // because of the ++i instruction we need
-            // to undo that so the end is counted correctly. this happens
-            // to occur when followed by another token, so it's critical.
-            if (i + 1 < input.length) value = input[--i];
+            if (i + 1 < input.length) value = input[--i]; // We went one too far, so let's go back.
+
             output.push([str, { type: TokenTypes.CONSTANT_NUMBER, position: { start, end: value[1].end } }]);
             continue;
         }
@@ -159,10 +154,8 @@ export default function mergeTokens(input: PositionedString[]): Token[] {
                 if (i + 1 >= input.length) break;
                 value = input[++i];
             }
-            // because of the ++i instruction we need
-            // to undo that so the end is counted correctly. this happens
-            // to occur when followed by another token, so it's critical.
-            if (i + 1 < input.length) value = input[--i];
+            if (i + 1 < input.length) value = input[--i]; // We went one too far, so let's go back.
+
             output.push([str, { type: TokenTypes.NAME, position: { start, end: value[1].end } }]);
             continue;
         }
@@ -172,29 +165,62 @@ export default function mergeTokens(input: PositionedString[]): Token[] {
         // They are checked first, so that they don't get confused with
         // multiple single character operators.
         // Examples of these are ++, +=, ==, !=, etc.
+        const multiCharOperators = ['==', '!=', '>=', '<=', '+=', '-=', '*=', '/=', '++', '--', '||', '&&', '<<', '>>', '**'];
 
-        const listOfMCOperators = ['==', '!=', '>=', '<=', '+=', '-=', '*=', '/=', '++', '--'];
-
-        let didMatchOperator = false;
-        for (const op of listOfMCOperators) {
-            let didMatch = true;
+        let didMatchAnyOperator = false;
+        for (const op of multiCharOperators) {
+            let didMatchCurrent = true;
             if (i + op.length - 1 >= input.length) continue; // We can't match this operator, it's too long.
             for (let j = 0; j < op.length; j++)
                 // If the current character doesn't match the current operator, then we can skip this operator.
                 if (input[i + j][0] !== op[j]) {
-                    didMatch = false;
+                    didMatchCurrent = false;
                     break;
                 }
 
-            if (didMatch) {
+            if (didMatchCurrent) {
                 // We found a match! Let's add it to the output.
-                output.push([op, { type: TokenTypes.OTHER, position: { start: input[i][1].start, end: input[i + op.length - 1][1].end } }]);
+                output.push([op, { type: TokenTypes.OPERATOR, position: { start: input[i][1].start, end: input[i + op.length - 1][1].end } }]);
                 i += op.length - 1;
-                didMatchOperator = true;
+                didMatchAnyOperator = true;
                 break;
             }
         }
-        if (didMatchOperator) continue;
+        if (didMatchAnyOperator) continue;
+
+        // Single-character operators
+        // These are operators that are only one character long.
+        // Examples of these are +, -, *, /, etc.
+        const singleCharOperators = [
+            '+',
+            '-',
+            '*',
+            '/',
+            '%',
+            '=',
+            '!',
+            '<',
+            '>',
+            '&',
+            '|',
+            '^',
+            '~',
+            '(',
+            ')',
+            '{',
+            '}',
+            '[',
+            ']',
+            ',',
+            ';',
+            ':',
+            '.'
+        ];
+
+        if (singleCharOperators.includes(value[0])) {
+            output.push([value[0], { type: TokenTypes.OPERATOR, position: value[1] }]);
+            continue;
+        }
 
         // Anything else is an OTHER
         output.push([value[0], { type: TokenTypes.OTHER, position: value[1] }]);

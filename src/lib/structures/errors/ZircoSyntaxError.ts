@@ -29,7 +29,10 @@ export enum ZircoSyntaxErrorTypes {
     LEXER_NUMBER_MULTIPLE_DECIMALS,
 
     /** Lexer error (CONSTANT_NUMBER token): Type prefix without a value */
-    LEXER_NUMBER_TYPE_PREFIX_NO_VALUE
+    LEXER_NUMBER_TYPE_PREFIX_NO_VALUE,
+
+    /** Lexer error (CONSTANT_NUMBER token): Things like 0b1F or 0xZ */
+    LEXER_NUMBER_INVALID_CHARACTER
 }
 
 /** Represents a syntax error. */
