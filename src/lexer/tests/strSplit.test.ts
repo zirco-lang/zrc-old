@@ -1,5 +1,3 @@
-// for some reason with the babel processor used, paths end in .ts
-// only in tests
 import strSplit from '../strSplit';
 
 describe('strSplit', () => {
