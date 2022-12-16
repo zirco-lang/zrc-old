@@ -283,6 +283,23 @@ describe('mergeTokens', () => {
                 ['$', { type: TokenTypes.OTHER, position: { start: 0, end: 1 } }],
                 ['$', { type: TokenTypes.OTHER, position: { start: 1, end: 2 } }]
             ]));
+        it('letter in a number', () => {
+            const f = () =>
+                mergeTokens([
+                    ['1', { start: 0, end: 1 }],
+                    ['a', { start: 1, end: 2 }]
+                ]);
+            let didThrow = false;
+            try {
+                f();
+            } catch (e) {
+                didThrow = true;
+                expect(e).toBeInstanceOf(ZircoSyntaxError);
+                expect((e as ZircoSyntaxError).type).toBe(ZircoSyntaxErrorTypes.LEXER_NUMBER_INVALID_CHARACTER);
+                expect((e as ZircoSyntaxError).position).toEqual({ start: 1, end: 2 });
+            }
+            expect(didThrow).toBe(true);
+        });
         it('no whitespace change in token type', () =>
             expect(
                 mergeTokens([

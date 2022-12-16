@@ -123,7 +123,9 @@ export default function mergeTokens(input: PositionedString[]): Token[] {
             let str = '';
             const start = value[1].start;
             let hasHadDecimal = false;
-            while (/[\d._]/.test(value[0])) {
+            while (/[^\s]/.test(value[0])) {
+                if (/[^0-9._]/.test(value[0]))
+                    throw new ZircoSyntaxError(ZircoSyntaxErrorTypes.LEXER_NUMBER_INVALID_CHARACTER, { start: value[1].start, end: value[1].end });
                 if (value[0] === '.') {
                     // to prevent values like 1.2.3 from passing
                     if (hasHadDecimal)
@@ -191,27 +193,7 @@ export default function mergeTokens(input: PositionedString[]): Token[] {
         // Single-character operators
         // These are operators that are only one character long.
         // Examples of these are +, -, *, /, etc.
-        const singleCharOperators = [
-            '+',
-            '-',
-            '*',
-            '/',
-            '%',
-            '=',
-            '!',
-            '<',
-            '>',
-            '(',
-            ')',
-            '{',
-            '}',
-            '[',
-            ']',
-            ',',
-            ';',
-            ':',
-            '.'
-        ];
+        const singleCharOperators = ['+', '-', '*', '/', '%', '=', '!', '<', '>', '(', ')', '{', '}', '[', ']', ',', ';', ':', '.'];
 
         if (singleCharOperators.includes(value[0])) {
             output.push([value[0], { type: TokenTypes.OPERATOR, position: value[1] }]);
