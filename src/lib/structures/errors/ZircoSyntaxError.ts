@@ -34,8 +34,8 @@ export enum ZircoSyntaxErrorTypes {
     /** Lexer error (CONSTANT_NUMBER token): Things like 0b1F or 0xZ */
     LEXER_NUMBER_INVALID_CHARACTER,
 
-    /** Lexer error (COMMENT token): Caused when a block comment isn't closed */
-    UNCLOSED_COMMENT
+    /** Lexer error (comment): Caused when a block comment isn't closed */
+    LEXER_UNCLOSED_COMMENT
 }
 
 /** Represents a syntax error. */

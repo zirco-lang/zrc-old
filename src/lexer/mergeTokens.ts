@@ -162,43 +162,48 @@ export default function mergeTokens(input: PositionedString[]): Token[] {
 
         // Test single-line comments first
         if (value[0] === "/" && input[i + 1]?.[0] === "/") {
-            do ++i; // Keep running forwards
+            do
+                ++i; // Keep running forwards
             while (i < length && input[i][0] !== "\n"); // Until we hit a newline or EoF
 
-            if (i >= length) break; // EoF; we're done
+            // EoF, we're done
+            if (i >= length) break;
             else continue; // otherwise, just go to the next iteration
         }
 
-
-        { // Then block comments
-            const isBlockCommentOpening = () => (input[i][0] + input[i + 1]?.[0]) === "/*",
-                isBlockCommentClosing = () => (input[i][0] + input[i + 1]?.[0]) === "*/";
+        {
+            // Then block comments
+            const isBlockCommentOpening = () => input[i][0] + input[i + 1]?.[0] === "/*",
+                isBlockCommentClosing = () => input[i][0] + input[i + 1]?.[0] === "*/";
 
             if (isBlockCommentOpening()) {
                 ++i; // Increment twice to prevent something like /*/ from counting (prevent the asterisk from being counted twice)
 
                 let nest = 1;
 
-                runForward: do { // Keep running forwards
+                do {
+                    // Keep running forwards
                     ++i;
 
                     // if we hit another block comment, increment the nest level and skip forwards
                     if (isBlockCommentOpening()) nest++;
-
                     // if we hit a closing group, decrement the nest level
                     else if (isBlockCommentClosing()) {
                         nest--;
 
                         // If we hit a */ group that closes the outermost block, exit
-                        if (nest === 0) break runForward;
+                        if (nest === 0) break;
                     }
                 } while (i < length - 1); // Keep going until we hit EoF
 
-                if (i >= length - 1) throw new ZircoSyntaxError(ZircoSyntaxErrorTypes.UNCLOSED_COMMENT, {
-                    start: value[1].start,
-                    end: input[i][1].end
-                }); // EoF
-                else { // next iteration, after skipping the current one (which would be the / character)
+                if (i >= length - 1)
+                    throw new ZircoSyntaxError(ZircoSyntaxErrorTypes.LEXER_UNCLOSED_COMMENT, {
+                        start: value[1].start,
+                        end: input[i][1].end
+                    });
+                // EoF
+                else {
+                    // next iteration, after skipping the current one (which would be the / character)
                     ++i;
                     continue;
                 }
