@@ -12,7 +12,7 @@
         "prettier": "prettier . -w",
         "prettier:check": "prettier . --check",
         "test": "jest",
-        "start:node": "node --experimental-specifier-resolution=node .",
+        "start:node": "yarn node -r source-map-support/register --experimental-specifier-resolution=node .",
         "prepare": "husky install",
         "lint-staged": "lint-staged",
         "lint": "eslint .",
@@ -62,5 +62,8 @@
         "*.json": [
             "prettier --write"
         ]
+    },
+    "dependencies": {
+        "source-map-support": "^0.5.21"
     }
 }
