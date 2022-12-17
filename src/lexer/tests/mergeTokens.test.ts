@@ -334,8 +334,7 @@ describe("mergeTokens", () => {
                     [".", { start: 2, end: 3 }]
                 ]);
             let didThrow = false;
-            // TODO: error messages should be enum values for the parent to process
-            // just like how positions/rendering is handled
+
             try {
                 f();
             } catch (e) {
@@ -431,7 +430,160 @@ describe("mergeTokens", () => {
             ).toEqual([["1_2", { type: TokenTypes.CONSTANT_NUMBER, position: { start: 0, end: 3 } }]]));
     });
 
-    it.todo("comments");
+    describe("comments", () => {
+        describe("single-line", () => {
+            it("simple single-line on its own (w/ space)", () =>
+                expect(
+                    mergeTokens([
+                        ["/", { start: 0, end: 1 }],
+                        ["/", { start: 1, end: 2 }],
+                        [" ", { start: 2, end: 3 }],
+                        ["a", { start: 3, end: 4 }]
+                    ])
+                ).toEqual([]));
+            it("simple single-line on its own (w/o space)", () =>
+                expect(
+                    mergeTokens([
+                        ["/", { start: 0, end: 1 }],
+                        ["/", { start: 1, end: 2 }],
+                        ["a", { start: 2, end: 3 }]
+                    ])
+                ).toEqual([]));
+            it("simple single-line with trailing space", () =>
+                expect(
+                    mergeTokens([
+                        ["/", { start: 0, end: 1 }],
+                        ["/", { start: 1, end: 2 }],
+                        [" ", { start: 2, end: 3 }],
+                        ["a", { start: 3, end: 4 }],
+                        [" ", { start: 4, end: 5 }]
+                    ])
+                ).toEqual([]));
+            it("simple single line with token before", () =>
+                expect(
+                    mergeTokens([
+                        ["a", { start: 0, end: 1 }],
+                        ["/", { start: 1, end: 2 }],
+                        ["/", { start: 2, end: 3 }],
+                        [" ", { start: 3, end: 4 }],
+                        ["b", { start: 4, end: 5 }]
+                    ])
+                ).toEqual([["a", { type: TokenTypes.NAME, position: { start: 0, end: 1 } }]]));
+            it("simple single line with token before (+ space)", () =>
+                expect(
+                    mergeTokens([
+                        ["a", { start: 0, end: 1 }],
+                        [" ", { start: 1, end: 2 }],
+                        ["/", { start: 2, end: 3 }],
+                        ["/", { start: 3, end: 4 }],
+                        [" ", { start: 4, end: 5 }],
+                        ["b", { start: 5, end: 6 }]
+                    ])
+                ).toEqual([["a", { type: TokenTypes.NAME, position: { start: 0, end: 1 } }]]));
+        });
+        describe("multi-line", () => {
+            it("on its own", () =>
+                expect(
+                    mergeTokens([
+                        ["/", { start: 0, end: 1 }],
+                        ["*", { start: 1, end: 2 }],
+                        ["a", { start: 2, end: 3 }],
+                        ["*", { start: 3, end: 4 }],
+                        ["/", { start: 4, end: 5 }]
+                    ])
+                ).toEqual([]));
+            it("with token before", () =>
+                expect(
+                    mergeTokens([
+                        ["a", { start: 0, end: 1 }],
+                        ["/", { start: 1, end: 2 }],
+                        ["*", { start: 2, end: 3 }],
+                        ["a", { start: 3, end: 4 }],
+                        ["*", { start: 4, end: 5 }],
+                        ["/", { start: 5, end: 6 }]
+                    ])
+                ).toEqual([["a", { type: TokenTypes.NAME, position: { start: 0, end: 1 } }]]));
+            it("with token after", () =>
+                expect(
+                    mergeTokens([
+                        ["/", { start: 0, end: 1 }],
+                        ["*", { start: 1, end: 2 }],
+                        ["a", { start: 2, end: 3 }],
+                        ["*", { start: 3, end: 4 }],
+                        ["/", { start: 4, end: 5 }],
+                        ["a", { start: 5, end: 6 }]
+                    ])
+                ).toEqual([["a", { type: TokenTypes.NAME, position: { start: 5, end: 6 } }]]));
+            it("with token before and after", () =>
+                expect(
+                    mergeTokens([
+                        ["a", { start: 0, end: 1 }],
+                        ["/", { start: 1, end: 2 }],
+                        ["*", { start: 2, end: 3 }],
+                        ["a", { start: 3, end: 4 }],
+                        ["*", { start: 4, end: 5 }],
+                        ["/", { start: 5, end: 6 }],
+                        ["a", { start: 6, end: 7 }]
+                    ])
+                ).toEqual([
+                    ["a", { type: TokenTypes.NAME, position: { start: 0, end: 1 } }],
+                    ["a", { type: TokenTypes.NAME, position: { start: 6, end: 7 } }]
+                ]));
+            it("with nesting", () =>
+                expect(
+                    mergeTokens([
+                        ["/", { start: 0, end: 1 }],
+                        ["*", { start: 1, end: 2 }],
+                        ["a", { start: 2, end: 3 }],
+                        ["/", { start: 3, end: 4 }],
+                        ["*", { start: 4, end: 5 }],
+                        ["a", { start: 5, end: 6 }],
+                        ["*", { start: 6, end: 7 }],
+                        ["/", { start: 7, end: 8 }],
+                        ["a", { start: 8, end: 9 }],
+                        ["*", { start: 9, end: 10 }],
+                        ["/", { start: 10, end: 11 }]
+                    ])
+                ).toEqual([]));
+            it("unclosed", () => {
+                const f = () =>
+                    mergeTokens([
+                        ["/", { start: 0, end: 1 }],
+                        ["*", { start: 1, end: 2 }],
+                        ["a", { start: 2, end: 3 }]
+                    ])
+                let didThrow = false;
+                try {
+                    f();
+                } catch (e) {
+                    didThrow = true;
+                    expect(e).toBeInstanceOf(ZircoSyntaxError);
+                    expect((e as ZircoSyntaxError).type).toBe(ZircoSyntaxErrorType.UNCLOSED_COMMENT)
+                    expect((e as ZircoSyntaxError).position).toEqual({ start:0, end:3 });
+                }
+                expect(didThrow).toBe(true);
+            });
+            it('unclosed (nested)', () => {
+                const f = () => mergeTokens([
+                    ['/', { start: 0, end: 1 }],
+                    ['*', { start: 1, end: 2 }],
+                    ['a', { start: 2, end: 3 }],
+                    ['/', { start: 3, end: 4 }],
+                    ['*', { start: 4, end: 5 }],
+                    ['a', { start: 5, end: 6 }],
+                ])
+                let didThrow = false;
+                try { f() }
+                catch (e) {
+                    didThrow = true;
+                    expect(e).toBeInstanceOf(ZircoSyntaxError);
+                    expect((e as ZircoSyntaxError).type).toBe(ZircoSyntaxErrorType.UNCLOSED_COMMENT)
+                    expect((e as ZircoSyntaxError).position).toEqual({ start: 0, end: 6 });
+                }
+                expect(didThrow).toBe(true);
+            })
+        });
+    });
 
     describe("multi-character operators", () => {
         it("addition assignment", () =>
