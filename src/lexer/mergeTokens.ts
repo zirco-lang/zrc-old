@@ -184,7 +184,7 @@ export default function mergeTokens(input: PositionedString[]): Token[] {
         // They are checked first, so that they don't get confused with
         // multiple single character operators.
         // Examples of these are ++, +=, ==, !=, etc.
-        const multiCharOperators = ['==', '!=', '>=', '<=', '+=', '-=', '*=', '/=', '++', '--', '||', '&&', '<<', '>>', '**'];
+        const multiCharOperators = ['==', '!=', '>=', '<=', '+=', '-=', '*=', '/=', '++', '--', '||', '&&', '<<', '>>', '**', '->'];
 
         let didMatchAnyOperator = false;
         for (const op of multiCharOperators) {
