@@ -551,15 +551,15 @@ describe("mergeTokens", () => {
                         ["/", { start: 0, end: 1 }],
                         ["*", { start: 1, end: 2 }],
                         ["a", { start: 2, end: 3 }]
-                    ])
+                    ]);
                 let didThrow = false;
                 try {
                     f();
                 } catch (e) {
                     didThrow = true;
                     expect(e).toBeInstanceOf(ZircoSyntaxError);
-                    expect((e as ZircoSyntaxError).type).toBe(ZircoSyntaxErrorType.UNCLOSED_COMMENT)
-                    expect((e as ZircoSyntaxError).position).toEqual({ start:0, end:3 });
+                    expect((e as ZircoSyntaxError).type).toBe(ZircoSyntaxErrorTypes.UNCLOSED_COMMENT);
+                    expect((e as ZircoSyntaxError).position).toEqual({ start: 0, end: 3 });
                 }
                 expect(didThrow).toBe(true);
             });
@@ -571,17 +571,17 @@ describe("mergeTokens", () => {
                     ['/', { start: 3, end: 4 }],
                     ['*', { start: 4, end: 5 }],
                     ['a', { start: 5, end: 6 }],
-                ])
+                ]);
                 let didThrow = false;
-                try { f() }
+                try { f(); }
                 catch (e) {
                     didThrow = true;
                     expect(e).toBeInstanceOf(ZircoSyntaxError);
-                    expect((e as ZircoSyntaxError).type).toBe(ZircoSyntaxErrorType.UNCLOSED_COMMENT)
+                    expect((e as ZircoSyntaxError).type).toBe(ZircoSyntaxErrorTypes.UNCLOSED_COMMENT);
                     expect((e as ZircoSyntaxError).position).toEqual({ start: 0, end: 6 });
                 }
                 expect(didThrow).toBe(true);
-            })
+            });
         });
     });
 

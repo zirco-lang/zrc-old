@@ -42,7 +42,7 @@ export type Token = [string, TokenData];
 
 export default function mergeTokens(input: PositionedString[]): Token[] {
     const output: Token[] = [];
-    for (let i = 0; i < input.length; i++) {
+    for (let i = 0, length = input.length; i < length; i++) {
         let value = input[i];
 
         // Welcome to the chaos that is Zirco's lexer.
@@ -66,7 +66,7 @@ export default function mergeTokens(input: PositionedString[]): Token[] {
             let str = "";
             const start = value[1].start;
 
-            if (i + 1 >= input.length)
+            if (i + 1 >= length)
                 throw new ZircoSyntaxError(ZircoSyntaxErrorTypes.LEXER_STRING_UNCLOSED, {
                     start,
                     end: i + 1
@@ -79,14 +79,14 @@ export default function mergeTokens(input: PositionedString[]): Token[] {
                 if (value[0] === "\\") {
                     // This will add the next character to the string, regardless of what it is, even if it's a ".
                     str += value[0];
-                    if (i + 1 >= input.length)
+                    if (i + 1 >= length)
                         throw new ZircoSyntaxError(ZircoSyntaxErrorTypes.LEXER_STRING_ESCAPE_EOF, { start: value[1].start, end: value[1].end });
                     value = input[++i];
                 }
 
                 str += value[0];
 
-                if (i + 1 >= input.length) throw new ZircoSyntaxError(ZircoSyntaxErrorTypes.LEXER_STRING_UNCLOSED, { start, end: value[1].end });
+                if (i + 1 >= length) throw new ZircoSyntaxError(ZircoSyntaxErrorTypes.LEXER_STRING_UNCLOSED, { start, end: value[1].end });
 
                 value = input[++i];
             }
@@ -104,13 +104,13 @@ export default function mergeTokens(input: PositionedString[]): Token[] {
         // "Prefixed" constants like 0xFF.
         // More specific comes first, so let's start with prefixed.
         // We only support 0b and 0d prefixes, so we can first check for a 0.
-        if (value[0] === "0" && i + 1 < input.length && (input[i + 1][0] === "b" || input[i + 1][0] === "x")) {
+        if (value[0] === "0" && i + 1 < length && (input[i + 1][0] === "b" || input[i + 1][0] === "x")) {
             let str = "0";
             const start = value[1].start;
             value = input[++i];
             str += value[0];
 
-            if (i + 1 >= input.length)
+            if (i + 1 >= length)
                 throw new ZircoSyntaxError(ZircoSyntaxErrorTypes.LEXER_NUMBER_TYPE_PREFIX_NO_VALUE, { start: value[1].start, end: value[1].end });
 
             const matchReg = value[0] === "b" ? /[01]/ : /[0-9a-fA-F]/;
@@ -122,7 +122,7 @@ export default function mergeTokens(input: PositionedString[]): Token[] {
                     throw new ZircoSyntaxError(ZircoSyntaxErrorTypes.LEXER_NUMBER_INVALID_CHARACTER, { start: value[1].start, end: value[1].end });
 
                 str += value[0];
-                if (i + 1 >= input.length) break;
+                if (i + 1 >= length) break;
             }
 
             output.push([str, { type: TokenTypes.CONSTANT_NUMBER, position: { start, end: value[1].end } }]);
@@ -150,14 +150,59 @@ export default function mergeTokens(input: PositionedString[]): Token[] {
                 }
 
                 str += value[0];
-                if (i + 1 >= input.length) break;
+                if (i + 1 >= length) break;
                 value = input[++i];
             }
 
-            if (i + 1 < input.length) value = input[--i]; // We went one too far, so let's go back.
+            if (i + 1 < length) value = input[--i]; // We went one too far, so let's go back.
 
             output.push([str, { type: TokenTypes.CONSTANT_NUMBER, position: { start, end: value[1].end } }]);
             continue;
+        }
+
+        // Test single-line comments first
+        if (value[0] === "/" && input[i + 1]?.[0] === "/") {
+            do ++i; // Keep running forwards
+            while (i < length && input[i][0] !== "\n"); // Until we hit a newline or EoF
+
+            if (i >= length) break; // EoF; we're done
+            else continue; // otherwise, just go to the next iteration
+        }
+
+
+        { // Then block comments
+            const isBlockCommentOpening = () => (input[i][0] + input[i + 1]?.[0]) === "/*",
+                isBlockCommentClosing = () => (input[i][0] + input[i + 1]?.[0]) === "*/";
+
+            if (isBlockCommentOpening()) {
+                ++i; // Increment twice to prevent something like /*/ from counting (prevent the asterisk from being counted twice)
+
+                let nest = 1;
+
+                runForward: do { // Keep running forwards
+                    ++i;
+
+                    // if we hit another block comment, increment the nest level and skip forwards
+                    if (isBlockCommentOpening()) nest++;
+
+                    // if we hit a closing group, decrement the nest level
+                    else if (isBlockCommentClosing()) {
+                        nest--;
+
+                        // If we hit a */ group that closes the outermost block, exit
+                        if (nest === 0) break runForward;
+                    }
+                } while (i < length - 1); // Keep going until we hit EoF
+
+                if (i >= length - 1) throw new ZircoSyntaxError(ZircoSyntaxErrorTypes.UNCLOSED_COMMENT, {
+                    start: value[1].start,
+                    end: input[i][1].end
+                }); // EoF
+                else { // next iteration, after skipping the current one (which would be the / character)
+                    ++i;
+                    continue;
+                }
+            }
         }
 
         // At this point, names shouldn't be too difficult.
@@ -169,11 +214,11 @@ export default function mergeTokens(input: PositionedString[]): Token[] {
 
             while (/[a-zA-Z0-9_]/.test(value[0])) {
                 str += value[0];
-                if (i + 1 >= input.length) break;
+                if (i + 1 >= length) break;
                 value = input[++i];
             }
 
-            if (i + 1 < input.length) value = input[--i]; // We went one too far, so let's go back.
+            if (i + 1 < length) value = input[--i]; // We went one too far, so let's go back.
 
             output.push([str, { type: TokenTypes.NAME, position: { start, end: value[1].end } }]);
             continue;
@@ -190,7 +235,7 @@ export default function mergeTokens(input: PositionedString[]): Token[] {
         for (const op of multiCharOperators) {
             let didMatchCurrent = true;
 
-            if (i + op.length - 1 >= input.length) continue; // We can't match this operator, it's too long.
+            if (i + op.length - 1 >= length) continue; // We can't match this operator, it's too long.
 
             for (let j = 0; j < op.length; j++)
                 // If the current character doesn't match the current operator, then we can skip this operator.

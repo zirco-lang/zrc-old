@@ -32,7 +32,10 @@ export enum ZircoSyntaxErrorTypes {
     LEXER_NUMBER_TYPE_PREFIX_NO_VALUE,
 
     /** Lexer error (CONSTANT_NUMBER token): Things like 0b1F or 0xZ */
-    LEXER_NUMBER_INVALID_CHARACTER
+    LEXER_NUMBER_INVALID_CHARACTER,
+
+    /** Lexer error (COMMENT token): Caused when a block comment isn't closed */
+    UNCLOSED_COMMENT
 }
 
 /** Represents a syntax error. */
