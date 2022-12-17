@@ -135,7 +135,7 @@ export default function mergeTokens(input: PositionedString[]): Token[] {
             const start = value[1].start;
             let hasHadDecimal = false;
 
-            while (/[^\s]/.test(value[0])) {
+            while (/[0-9A-Za-z._]/.test(value[0])) {
                 if (/[^0-9._]/.test(value[0]))
                     throw new ZircoSyntaxError(ZircoSyntaxErrorTypes.LEXER_NUMBER_INVALID_CHARACTER, { start: value[1].start, end: value[1].end });
 
