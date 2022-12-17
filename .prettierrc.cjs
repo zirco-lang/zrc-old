@@ -18,8 +18,7 @@
 
 module.exports = {
     tabWidth: 4,
-    singleQuote: true,
-    quoteProps: 'consistent',
-    trailingComma: 'none',
+    quoteProps: "consistent",
+    trailingComma: "none",
     printWidth: 150
 };

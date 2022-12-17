@@ -16,8 +16,8 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import ZircoSyntaxError, { ZircoSyntaxErrorTypes } from '../lib/structures/errors/ZircoSyntaxError';
-import type { PositionedString, StringPosition } from './strSplit';
+import ZircoSyntaxError, { ZircoSyntaxErrorTypes } from "../lib/structures/errors/ZircoSyntaxError";
+import type { PositionedString, StringPosition } from "./strSplit";
 
 /** Represents all possible types for a Token. */
 export enum TokenTypes {
@@ -63,7 +63,7 @@ export default function mergeTokens(input: PositionedString[]): Token[] {
 
         // If the first character is a ", then we know it's a string.
         if (value[0] === '"') {
-            let str = '';
+            let str = "";
             const start = value[1].start;
 
             if (i + 1 >= input.length)
@@ -76,7 +76,7 @@ export default function mergeTokens(input: PositionedString[]): Token[] {
 
             // We need to loop through the string until we find the end.
             while (value[0] !== '"') {
-                if (value[0] === '\\') {
+                if (value[0] === "\\") {
                     // This will add the next character to the string, regardless of what it is, even if it's a ".
                     str += value[0];
                     if (i + 1 >= input.length)
@@ -104,8 +104,8 @@ export default function mergeTokens(input: PositionedString[]): Token[] {
         // "Prefixed" constants like 0xFF.
         // More specific comes first, so let's start with prefixed.
         // We only support 0b and 0d prefixes, so we can first check for a 0.
-        if (value[0] === '0' && i + 1 < input.length && (input[i + 1][0] === 'b' || input[i + 1][0] === 'x')) {
-            let str = '0';
+        if (value[0] === "0" && i + 1 < input.length && (input[i + 1][0] === "b" || input[i + 1][0] === "x")) {
+            let str = "0";
             const start = value[1].start;
             value = input[++i];
             str += value[0];
@@ -113,7 +113,7 @@ export default function mergeTokens(input: PositionedString[]): Token[] {
             if (i + 1 >= input.length)
                 throw new ZircoSyntaxError(ZircoSyntaxErrorTypes.LEXER_NUMBER_TYPE_PREFIX_NO_VALUE, { start: value[1].start, end: value[1].end });
 
-            const matchReg = value[0] === 'b' ? /[01]/ : /[0-9a-fA-F]/;
+            const matchReg = value[0] === "b" ? /[01]/ : /[0-9a-fA-F]/;
 
             while (/[a-zA-Z0-9]/.test(input[i + 1][0])) {
                 value = input[++i];
@@ -131,7 +131,7 @@ export default function mergeTokens(input: PositionedString[]): Token[] {
 
         // Non-prefixed numbers
         if (/\d/.test(value[0])) {
-            let str = '';
+            let str = "";
             const start = value[1].start;
             let hasHadDecimal = false;
 
@@ -139,7 +139,7 @@ export default function mergeTokens(input: PositionedString[]): Token[] {
                 if (/[^0-9._]/.test(value[0]))
                     throw new ZircoSyntaxError(ZircoSyntaxErrorTypes.LEXER_NUMBER_INVALID_CHARACTER, { start: value[1].start, end: value[1].end });
 
-                if (value[0] === '.') {
+                if (value[0] === ".") {
                     // to prevent values like 1.2.3 from passing
                     if (hasHadDecimal)
                         throw new ZircoSyntaxError(ZircoSyntaxErrorTypes.LEXER_NUMBER_MULTIPLE_DECIMALS, {
@@ -164,7 +164,7 @@ export default function mergeTokens(input: PositionedString[]): Token[] {
         // Names are just a sequence of letters, numbers, and underscores.
         // They can't start with a number, though.
         if (/[a-zA-Z_]/.test(value[0])) {
-            let str = '';
+            let str = "";
             const start = value[1].start;
 
             while (/[a-zA-Z0-9_]/.test(value[0])) {
@@ -184,7 +184,7 @@ export default function mergeTokens(input: PositionedString[]): Token[] {
         // They are checked first, so that they don't get confused with
         // multiple single character operators.
         // Examples of these are ++, +=, ==, !=, etc.
-        const multiCharOperators = ['==', '!=', '>=', '<=', '+=', '-=', '*=', '/=', '++', '--', '||', '&&', '<<', '>>', '**', '->'];
+        const multiCharOperators = ["==", "!=", ">=", "<=", "+=", "-=", "*=", "/=", "++", "--", "||", "&&", "<<", ">>", "**", "->"];
 
         let didMatchAnyOperator = false;
         for (const op of multiCharOperators) {
@@ -212,7 +212,7 @@ export default function mergeTokens(input: PositionedString[]): Token[] {
         // Single-character operators
         // These are operators that are only one character long.
         // Examples of these are +, -, *, /, etc.
-        const singleCharOperators = ['+', '-', '*', '/', '%', '=', '!', '<', '>', '(', ')', '{', '}', '[', ']', ',', ';', ':', '.'];
+        const singleCharOperators = ["+", "-", "*", "/", "%", "=", "!", "<", ">", "(", ")", "{", "}", "[", "]", ",", ";", ":", "."];
 
         if (singleCharOperators.includes(value[0])) {
             output.push([value[0], { type: TokenTypes.OPERATOR, position: value[1] }]);

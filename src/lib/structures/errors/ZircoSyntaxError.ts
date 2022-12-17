@@ -16,7 +16,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import type { StringPosition } from 'src/lexer/strSplit';
+import type { StringPosition } from "src/lexer/strSplit";
 
 export enum ZircoSyntaxErrorTypes {
     /** Lexer error (STRING token): Caused when string is missing a closing quote */
@@ -47,7 +47,7 @@ export default class ZircoSyntaxError extends Error {
     public constructor(type: ZircoSyntaxErrorTypes, position: StringPosition) {
         super(ZircoSyntaxErrorTypes[type]);
         this.type = type;
-        this.name = 'ZircoSyntaxError';
+        this.name = "ZircoSyntaxError";
         this.position = position;
     }
 }

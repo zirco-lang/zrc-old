@@ -28,5 +28,5 @@ export type PositionedString = [string, StringPosition];
  * @returns The input string, split into characters
  */
 export default function strSplit(input: string): PositionedString[] {
-    return input.split('').map((value, index) => [value, { start: index, end: index + 1 }]);
+    return input.split("").map((value, index) => [value, { start: index, end: index + 1 }]);
 }
