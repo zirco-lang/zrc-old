@@ -16,9 +16,4 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-module.exports = {
-    tabWidth: 4,
-    quoteProps: "consistent",
-    trailingComma: "none",
-    printWidth: 150
-};
+module.exports = require("@zirco-lang/prettier-config");
