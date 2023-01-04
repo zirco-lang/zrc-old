@@ -18,8 +18,7 @@
 
 import type { Token } from "./mergeTokens";
 import mergeTokens from "./mergeTokens";
-import strSplit from "./strSplit";
 
 export default function lex(input: string): Token[] {
-    return mergeTokens(strSplit(input));
+    return mergeTokens(input);
 }
