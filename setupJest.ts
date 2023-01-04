@@ -1,3 +1,5 @@
+/* istanbul ignore file: nobody gives a shit about non-source coverage */
+
 import type { MatcherFunction } from "expect";
 
 const toThrowZircoError: MatcherFunction<[error: unknown, type: unknown, position: unknown]> = function (fn, error, type, position) {
