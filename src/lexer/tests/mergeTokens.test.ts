@@ -16,6 +16,8 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+import "../../../setupJest";
+
 import ZircoSyntaxError, { ZircoSyntaxErrorTypes } from "../../lib/structures/errors/ZircoSyntaxError";
 import mergeTokens, { TokenTypes } from "../mergeTokens";
 
@@ -41,56 +43,28 @@ describe("mergeTokens", () => {
                 ])
             ).toEqual([['"a"', { type: TokenTypes.STRING, position: { start: 0, end: 3 } }]]));
         describe("strings with weird traits", () => {
-            it("errors on string with no end", () => {
-                const f = () => mergeTokens([['"', { start: 0, end: 1 }]]);
-                let didThrow = false;
-                try {
-                    f();
-                } catch (e) {
-                    didThrow = true;
-                    expect(e).toBeInstanceOf(ZircoSyntaxError);
-                    // we don't check message in case the enum types change as it's not defined to be something officially anyway
-                    expect((e as ZircoSyntaxError).type).toBe(ZircoSyntaxErrorTypes.LEXER_STRING_UNCLOSED);
-                    expect((e as ZircoSyntaxError).position).toEqual({ start: 0, end: 1 });
-                }
-                expect(didThrow).toBe(true);
-            });
-            it("should error provided a non-closed string with an escape", () => {
-                const f = () =>
+            it("errors on string with no end", () =>
+                expect(() => mergeTokens([['"', { start: 0, end: 1 }]])).toThrowZircoError(
+                    ZircoSyntaxError,
+                    ZircoSyntaxErrorTypes.LEXER_STRING_UNCLOSED,
+                    { start: 0, end: 1 }
+                ));
+            it("should error provided a non-closed string with an escape", () =>
+                expect(() =>
                     mergeTokens([
                         ['"', { start: 0, end: 1 }],
                         ["a", { start: 1, end: 2 }],
                         ["\\", { start: 2, end: 3 }]
-                    ]);
-                let didThrow = false;
-                try {
-                    f();
-                } catch (e) {
-                    didThrow = true;
-                    expect(e).toBeInstanceOf(ZircoSyntaxError);
-                    expect((e as ZircoSyntaxError).type).toBe(ZircoSyntaxErrorTypes.LEXER_STRING_ESCAPE_EOF);
-                    expect((e as ZircoSyntaxError).position).toEqual({ start: 2, end: 3 });
-                }
-                expect(didThrow).toBe(true);
-            });
-            it("escaped EOF", () => {
-                const f = () =>
+                    ])
+                ).toThrowZircoError(ZircoSyntaxError, ZircoSyntaxErrorTypes.LEXER_STRING_ESCAPE_EOF, { start: 2, end: 3 }));
+            it("escaped EOF", () =>
+                expect(() =>
                     mergeTokens([
                         ['"', { start: 0, end: 1 }],
                         ["\\", { start: 1, end: 2 }],
                         ['"', { start: 2, end: 3 }]
-                    ]);
-                let didThrow = false;
-                try {
-                    f();
-                } catch (e) {
-                    didThrow = true;
-                    expect(e).toBeInstanceOf(ZircoSyntaxError);
-                    expect((e as ZircoSyntaxError).type).toBe(ZircoSyntaxErrorTypes.LEXER_STRING_UNCLOSED);
-                    expect((e as ZircoSyntaxError).position).toEqual({ start: 0, end: 3 });
-                }
-                expect(didThrow).toBe(true);
-            });
+                    ])
+                ).toThrowZircoError(ZircoSyntaxError, ZircoSyntaxErrorTypes.LEXER_STRING_UNCLOSED, { start: 0, end: 3 }));
             it("works with escaped quote", () =>
                 expect(
                     mergeTokens([
@@ -136,42 +110,22 @@ describe("mergeTokens", () => {
                         ["3", { start: 2, end: 3 }]
                     ])
                 ).toEqual([["1.3", { type: TokenTypes.CONSTANT_NUMBER, position: { start: 0, end: 3 } }]]));
-            it("should error when given a non-binary value in a binary constant", () => {
-                const f = () =>
+            it("should error when given a non-binary value in a binary constant", () =>
+                expect(() =>
                     mergeTokens([
                         ["0", { start: 0, end: 1 }],
                         ["b", { start: 1, end: 2 }],
                         ["2", { start: 2, end: 3 }]
-                    ]);
-                let didThrow = false;
-                try {
-                    f();
-                } catch (e) {
-                    didThrow = true;
-                    expect(e).toBeInstanceOf(ZircoSyntaxError);
-                    expect((e as ZircoSyntaxError).type).toBe(ZircoSyntaxErrorTypes.LEXER_NUMBER_INVALID_CHARACTER);
-                    expect((e as ZircoSyntaxError).position).toEqual({ start: 2, end: 3 });
-                }
-                expect(didThrow).toBe(true);
-            });
-            it("should error given a Z in a hex", () => {
-                const f = () =>
+                    ])
+                ).toThrowZircoError(ZircoSyntaxError, ZircoSyntaxErrorTypes.LEXER_NUMBER_INVALID_CHARACTER, { start: 2, end: 3 }));
+            it("should error given a Z in a hex", () =>
+                expect(() =>
                     mergeTokens([
                         ["0", { start: 0, end: 1 }],
                         ["x", { start: 1, end: 2 }],
                         ["Z", { start: 2, end: 3 }]
-                    ]);
-                let didThrow = false;
-                try {
-                    f();
-                } catch (e) {
-                    didThrow = true;
-                    expect(e).toBeInstanceOf(ZircoSyntaxError);
-                    expect((e as ZircoSyntaxError).type).toBe(ZircoSyntaxErrorTypes.LEXER_NUMBER_INVALID_CHARACTER);
-                    expect((e as ZircoSyntaxError).position).toEqual({ start: 2, end: 3 });
-                }
-                expect(didThrow).toBe(true);
-            });
+                    ])
+                ).toThrowZircoError(ZircoSyntaxError, ZircoSyntaxErrorTypes.LEXER_NUMBER_INVALID_CHARACTER, { start: 2, end: 3 }));
         });
         it("operator", () =>
             expect(mergeTokens([["+", { start: 0, end: 1 }]])).toEqual([["+", { type: TokenTypes.OPERATOR, position: { start: 0, end: 1 } }]]));
@@ -283,23 +237,13 @@ describe("mergeTokens", () => {
                 ["$", { type: TokenTypes.OTHER, position: { start: 0, end: 1 } }],
                 ["$", { type: TokenTypes.OTHER, position: { start: 1, end: 2 } }]
             ]));
-        it("letter in a number", () => {
-            const f = () =>
+        it("letter in a number", () =>
+            expect(() =>
                 mergeTokens([
                     ["1", { start: 0, end: 1 }],
                     ["a", { start: 1, end: 2 }]
-                ]);
-            let didThrow = false;
-            try {
-                f();
-            } catch (e) {
-                didThrow = true;
-                expect(e).toBeInstanceOf(ZircoSyntaxError);
-                expect((e as ZircoSyntaxError).type).toBe(ZircoSyntaxErrorTypes.LEXER_NUMBER_INVALID_CHARACTER);
-                expect((e as ZircoSyntaxError).position).toEqual({ start: 1, end: 2 });
-            }
-            expect(didThrow).toBe(true);
-        });
+                ])
+            ).toThrowZircoError(ZircoSyntaxError, ZircoSyntaxErrorTypes.LEXER_NUMBER_INVALID_CHARACTER, { start: 1, end: 2 }));
         it("no whitespace change in token type", () =>
             expect(
                 mergeTokens([
@@ -326,61 +270,30 @@ describe("mergeTokens", () => {
                 ["+", { type: TokenTypes.OPERATOR, position: { start: 2, end: 3 } }],
                 ["b", { type: TokenTypes.NAME, position: { start: 4, end: 5 } }]
             ]));
-        it("sequential decimals (sequential) should fail", () => {
-            const f = () =>
+        it("sequential decimals (sequential) should fail", () =>
+            expect(() =>
                 mergeTokens([
                     ["1", { start: 0, end: 1 }],
                     [".", { start: 1, end: 2 }],
                     [".", { start: 2, end: 3 }]
-                ]);
-            let didThrow = false;
-
-            try {
-                f();
-            } catch (e) {
-                didThrow = true;
-                expect(e).toBeInstanceOf(ZircoSyntaxError);
-                expect((e as ZircoSyntaxError).type).toBe(ZircoSyntaxErrorTypes.LEXER_NUMBER_MULTIPLE_DECIMALS);
-                expect((e as ZircoSyntaxError).position).toEqual({ start: 2, end: 3 });
-            }
-            expect(didThrow).toBe(true);
-        });
-        it("sequential decimals (separated) should fail", () => {
-            const f = () =>
+                ])
+            ).toThrowZircoError(ZircoSyntaxError, ZircoSyntaxErrorTypes.LEXER_NUMBER_MULTIPLE_DECIMALS, { start: 2, end: 3 }));
+        it("sequential decimals (separated) should fail", () =>
+            expect(() =>
                 mergeTokens([
                     ["1", { start: 0, end: 1 }],
                     [".", { start: 1, end: 2 }],
                     ["2", { start: 2, end: 3 }],
                     [".", { start: 3, end: 4 }]
-                ]);
-            let didThrow = false;
-            try {
-                f();
-            } catch (e) {
-                didThrow = true;
-                expect(e).toBeInstanceOf(ZircoSyntaxError);
-                expect((e as ZircoSyntaxError).type).toBe(ZircoSyntaxErrorTypes.LEXER_NUMBER_MULTIPLE_DECIMALS);
-                expect((e as ZircoSyntaxError).position).toEqual({ start: 3, end: 4 });
-            }
-            expect(didThrow).toBe(true);
-        });
-        it("opening but not a value for a constant number", () => {
-            const f = () =>
+                ])
+            ).toThrowZircoError(ZircoSyntaxError, ZircoSyntaxErrorTypes.LEXER_NUMBER_MULTIPLE_DECIMALS, { start: 3, end: 4 }));
+        it("opening but not a value for a constant number", () =>
+            expect(() =>
                 mergeTokens([
                     ["0", { start: 0, end: 1 }],
                     ["x", { start: 1, end: 2 }]
-                ]);
-            let didThrow = false;
-            try {
-                f();
-            } catch (e) {
-                didThrow = true;
-                expect(e).toBeInstanceOf(ZircoSyntaxError);
-                expect((e as ZircoSyntaxError).type).toBe(ZircoSyntaxErrorTypes.LEXER_NUMBER_TYPE_PREFIX_NO_VALUE);
-                expect((e as ZircoSyntaxError).position).toEqual({ start: 1, end: 2 });
-            }
-            expect(didThrow).toBe(true);
-        });
+                ])
+            ).toThrowZircoError(ZircoSyntaxError, ZircoSyntaxErrorTypes.LEXER_NUMBER_TYPE_PREFIX_NO_VALUE, { start: 1, end: 2 }));
         it("sequential strings", () =>
             expect(
                 mergeTokens([
@@ -545,26 +458,16 @@ describe("mergeTokens", () => {
                         ["/", { start: 10, end: 11 }]
                     ])
                 ).toEqual([]));
-            it("unclosed", () => {
-                const f = () =>
+            it("unclosed", () =>
+                expect(() =>
                     mergeTokens([
                         ["/", { start: 0, end: 1 }],
                         ["*", { start: 1, end: 2 }],
                         ["a", { start: 2, end: 3 }]
-                    ]);
-                let didThrow = false;
-                try {
-                    f();
-                } catch (e) {
-                    didThrow = true;
-                    expect(e).toBeInstanceOf(ZircoSyntaxError);
-                    expect((e as ZircoSyntaxError).type).toBe(ZircoSyntaxErrorTypes.LEXER_UNCLOSED_COMMENT);
-                    expect((e as ZircoSyntaxError).position).toEqual({ start: 0, end: 3 });
-                }
-                expect(didThrow).toBe(true);
-            });
-            it("unclosed (nested)", () => {
-                const f = () =>
+                    ])
+                ).toThrowZircoError(ZircoSyntaxError, ZircoSyntaxErrorTypes.LEXER_UNCLOSED_COMMENT, { start: 0, end: 3 }));
+            it("unclosed (nested)", () =>
+                expect(() =>
                     mergeTokens([
                         ["/", { start: 0, end: 1 }],
                         ["*", { start: 1, end: 2 }],
@@ -572,18 +475,8 @@ describe("mergeTokens", () => {
                         ["/", { start: 3, end: 4 }],
                         ["*", { start: 4, end: 5 }],
                         ["a", { start: 5, end: 6 }]
-                    ]);
-                let didThrow = false;
-                try {
-                    f();
-                } catch (e) {
-                    didThrow = true;
-                    expect(e).toBeInstanceOf(ZircoSyntaxError);
-                    expect((e as ZircoSyntaxError).type).toBe(ZircoSyntaxErrorTypes.LEXER_UNCLOSED_COMMENT);
-                    expect((e as ZircoSyntaxError).position).toEqual({ start: 0, end: 6 });
-                }
-                expect(didThrow).toBe(true);
-            });
+                    ])
+                ).toThrowZircoError(ZircoSyntaxError, ZircoSyntaxErrorTypes.LEXER_UNCLOSED_COMMENT, { start: 0, end: 6 }));
             it("newline case", () =>
                 expect(
                     mergeTokens([
