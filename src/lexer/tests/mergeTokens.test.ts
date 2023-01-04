@@ -16,6 +16,8 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+import "../../../setupJest";
+
 import ZircoSyntaxError, { ZircoSyntaxErrorTypes } from "../../lib/structures/errors/ZircoSyntaxError";
 import mergeTokens, { TokenTypes } from "../mergeTokens";
 
@@ -573,16 +575,8 @@ describe("mergeTokens", () => {
                         ["*", { start: 4, end: 5 }],
                         ["a", { start: 5, end: 6 }]
                     ]);
-                let didThrow = false;
-                try {
-                    f();
-                } catch (e) {
-                    didThrow = true;
-                    expect(e).toBeInstanceOf(ZircoSyntaxError);
-                    expect((e as ZircoSyntaxError).type).toBe(ZircoSyntaxErrorTypes.LEXER_UNCLOSED_COMMENT);
-                    expect((e as ZircoSyntaxError).position).toEqual({ start: 0, end: 6 });
-                }
-                expect(didThrow).toBe(true);
+
+                expect(f).toThrowZircoError(ZircoSyntaxError, ZircoSyntaxErrorTypes.LEXER_UNCLOSED_COMMENT, { start: 0, end: 6 });
             });
             it("newline case", () =>
                 expect(
