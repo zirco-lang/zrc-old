@@ -599,6 +599,25 @@ describe("mergeTokens", () => {
                     ["a", { type: TokenTypes.NAME, position: { start: 0, end: 1 } }],
                     ["a", { type: TokenTypes.NAME, position: { start: 6, end: 7 } }]
                 ]));
+            it("block comment start marker within a line-comment", () =>
+                expect(
+                    mergeTokens([
+                        ["/", { start: 0, end: 1 }],
+                        ["/", { start: 1, end: 2 }],
+                        ["/", { start: 2, end: 3 }],
+                        ["*", { start: 3, end: 4 }]
+                    ])
+                ).toEqual([]));
+            it("un-started block comment end", () =>
+                expect(
+                    mergeTokens([
+                        ["*", { start: 0, end: 1 }],
+                        ["/", { start: 1, end: 2 }]
+                    ])
+                ).toEqual([
+                    ["*", { type: TokenTypes.OPERATOR, position: { start: 0, end: 1 } }],
+                    ["/", { type: TokenTypes.OPERATOR, position: { start: 1, end: 2 } }]
+                ]));
         });
     });
 
