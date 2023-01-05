@@ -45,7 +45,7 @@ export interface TokenData {
 /** Is a token. Wow. */
 export type Token = [string, TokenData];
 
-export default function mergeTokens(input: string): Token[] {
+export default function lex(input: string): Token[] {
     const output: Token[] = [];
     for (let i = 0, length = input.length; i < length; i++) {
         let char = input[i];

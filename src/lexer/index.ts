@@ -16,9 +16,6 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import type { Token } from "./mergeTokens";
-import mergeTokens from "./mergeTokens";
+import lex from "./lex";
 
-export default function lex(input: string): Token[] {
-    return mergeTokens(input);
-}
+export default lex;

@@ -17,9 +17,9 @@
  */
 
 import lex from "../index";
-import { TokenTypes } from "../mergeTokens";
+import { TokenTypes } from "../lex";
 
-describe("lex", () => {
+describe("lexer export", () => {
     it("works as expected", () =>
         expect(lex("2 + 2 = 4")).toEqual([
             ["2", { type: TokenTypes.CONSTANT_NUMBER, position: { start: 0, end: 1 } }],
