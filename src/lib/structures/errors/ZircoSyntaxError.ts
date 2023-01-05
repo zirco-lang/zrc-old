@@ -19,23 +19,42 @@
 import type { StringPosition } from "../../../lexer/lex";
 
 export enum ZircoSyntaxErrorTypes {
-    /** Lexer error (STRING token): Caused when string is missing a closing quote */
-    LEXER_STRING_UNCLOSED,
+    /**
+     * An "unclosed" string occurs when there is an opening quote that is not
+     * matched with a corresponding closing quote. This can also occur when
+     * the closing quote is escaped.
+     *
+     * Caught by: Lexer
+     */
+    UnclosedString,
 
-    /** Lexer error (STRING token): Caused when string has an escape before EOF */
-    LEXER_STRING_ESCAPE_EOF,
+    /**
+     * When a number token is discovered with multiple decimals, like "1.2.3"
+     *
+     * Caught by: Lexer
+     */
+    NumberMultipleDecimalPoints,
 
-    /** Lexer error (CONSTANT_NUMBER token): More than one decimal point */
-    LEXER_NUMBER_MULTIPLE_DECIMALS,
+    /**
+     * When a number token prefix like "0b" is discovered with no value after it.
+     *
+     * Caught by: Lexer
+     */
+    NumberPrefixWithNoValue,
 
-    /** Lexer error (CONSTANT_NUMBER token): Type prefix without a value */
-    LEXER_NUMBER_TYPE_PREFIX_NO_VALUE,
+    /**
+     * An invalid character was discovered within a number (like 0xZ)
+     *
+     * Caught by: Lexer
+     */
+    NumberInvalidCharacter,
 
-    /** Lexer error (CONSTANT_NUMBER token): Things like 0b1F or 0xZ */
-    LEXER_NUMBER_INVALID_CHARACTER,
-
-    /** Lexer error (comment): Caused when a block comment isn't closed */
-    LEXER_UNCLOSED_COMMENT
+    /**
+     * A block comment is left unclosed.
+     *
+     * Caught by: Lexer
+     */
+    UnclosedBlockComment
 }
 
 /** Represents a syntax error. */

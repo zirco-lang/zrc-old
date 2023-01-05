@@ -22,10 +22,10 @@ import { TokenTypes } from "../lex";
 describe("lexer export", () => {
     it("works as expected", () =>
         expect(lex("2 + 2 = 4")).toEqual([
-            ["2", { type: TokenTypes.CONSTANT_NUMBER, position: { start: 0, end: 1 } }],
-            ["+", { type: TokenTypes.OPERATOR, position: { start: 2, end: 3 } }],
-            ["2", { type: TokenTypes.CONSTANT_NUMBER, position: { start: 4, end: 5 } }],
-            ["=", { type: TokenTypes.OPERATOR, position: { start: 6, end: 7 } }],
-            ["4", { type: TokenTypes.CONSTANT_NUMBER, position: { start: 8, end: 9 } }]
+            ["2", { type: TokenTypes.Number, position: { start: 0, end: 1 } }],
+            ["+", { type: TokenTypes.Operator, position: { start: 2, end: 3 } }],
+            ["2", { type: TokenTypes.Number, position: { start: 4, end: 5 } }],
+            ["=", { type: TokenTypes.Operator, position: { start: 6, end: 7 } }],
+            ["4", { type: TokenTypes.Number, position: { start: 8, end: 9 } }]
         ]));
 });
