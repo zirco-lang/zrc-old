@@ -16,7 +16,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import type { StringPosition } from "src/lexer/strSplit";
+import type { StringPosition } from "../../../lexer/mergeTokens";
 
 export enum ZircoSyntaxErrorTypes {
     /** Lexer error (STRING token): Caused when string is missing a closing quote */
