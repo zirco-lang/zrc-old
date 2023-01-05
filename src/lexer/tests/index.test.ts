@@ -1,4 +1,4 @@
-/**
+/*
  * zrc - the Zirco compiler
  * Copyright (C) 2022  LogN
  *
