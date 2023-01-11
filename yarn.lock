@@ -1674,10 +1674,10 @@
     "@typescript-eslint/types" "5.48.0"
     eslint-visitor-keys "^3.3.0"
 
-"@zirco-lang/eslint-config@^0.4.0":
-  version "0.4.0"
-  resolved "https://registry.yarnpkg.com/@zirco-lang/eslint-config/-/eslint-config-0.4.0.tgz#ad13ed5ea1051d32d232ee3ed56ed3cd4a088650"
-  integrity sha512-jcbT7KnmsWvi6OzNskBam9iTpbUFjGmPhmX0NCnFjUswrtxwVggPQ7tegJBEgFwYOU+Bbyv0myTv9ZNxGk5KSw==
+"@zirco-lang/eslint-config@^1.0.0":
+  version "1.0.0"
+  resolved "https://registry.yarnpkg.com/@zirco-lang/eslint-config/-/eslint-config-1.0.0.tgz#706b0c26026d3ef06c85c66504386cb1e046cda1"
+  integrity sha512-nVXb9BQuC56NRsfay7ZjSQl4WnFF04pGFJUUYuJBUWK0dS7buK72WNh9ENOFJzRY4Kaj99aHiD+dSZ3aTTLYPw==
   dependencies:
     "@typescript-eslint/eslint-plugin" "^5.48.0"
     "@typescript-eslint/parser" "^5.48.0"
@@ -1688,15 +1688,15 @@
     eslint-plugin-simple-import-sort "^8.0.0"
     eslint-plugin-unused-imports "^2.0.0"
 
-"@zirco-lang/prettier-config@^0.4.0":
-  version "0.4.0"
-  resolved "https://registry.yarnpkg.com/@zirco-lang/prettier-config/-/prettier-config-0.4.0.tgz#1aa9d03437c6b962bec55651ac62ccda27df7554"
-  integrity sha512-MK8JAHDu+B0AFJQ9n4ly9rc99SEGcQs9TXPS0pInmWIDMaKvMUF3hFQO2+fqjh891b2M1RrMtmtOR1GHMu9wig==
+"@zirco-lang/prettier-config@^1.0.0":
+  version "1.0.0"
+  resolved "https://registry.yarnpkg.com/@zirco-lang/prettier-config/-/prettier-config-1.0.0.tgz#6cd0c32eedeb6d693a3e5b869c6b04b550944100"
+  integrity sha512-/5EaQfVckje/nJP3oyl4pBPisZ6sBftWY+zzXkLFvEB97qMxyDXGCPw6KhdaQdr84Zt+r+RwEE2xsDAYAvNYMQ==
 
-"@zirco-lang/ts-config@^0.4.1":
-  version "0.4.1"
-  resolved "https://registry.yarnpkg.com/@zirco-lang/ts-config/-/ts-config-0.4.1.tgz#cc9e2f05af0ebc9e5df7390f7c308f59b7fcc714"
-  integrity sha512-RgzO8u+0FIyXVo3qBiR3XruaXDrgAvM3Y4V39VfbzSdG8ngOi/j21fVxnuzsjqsLwspuRlot/vUzoaeRWSBwuw==
+"@zirco-lang/ts-config@^1.0.0":
+  version "1.0.0"
+  resolved "https://registry.yarnpkg.com/@zirco-lang/ts-config/-/ts-config-1.0.0.tgz#9e8f0685f03f2957492ac0210cfe8708d8f33c74"
+  integrity sha512-HDuOocg+vpG21nx3LAXnLWmWZ1PYDunpCtSBSYE6+Cv1OtAcmjG/2XJjJTi5CmbejTD4azKfzQlwqldDBkudZA==
 
 JSONStream@^1.0.4:
   version "1.3.5"
