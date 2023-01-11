@@ -30,6 +30,7 @@
         "@types/jest": "^29.2.4",
         "@zirco-lang/eslint-config": "^0.3.0",
         "@zirco-lang/prettier-config": "^0.3.0",
+        "@zirco-lang/ts-config": "^0.4.1",
         "commitlint": "^17.3.0",
         "conventional-changelog-conventionalcommits": "^5.0.0",
         "husky": "^8.0.2",

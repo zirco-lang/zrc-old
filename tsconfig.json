@@ -1,16 +1,1 @@
-{
-    "compilerOptions": {
-        "target": "es2020",
-        "module": "esnext",
-        "outDir": "./dist",
-        "sourceMap": true,
-        "strict": true,
-        "moduleResolution": "node",
-        "baseUrl": "./",
-        "esModuleInterop": true,
-        "forceConsistentCasingInFileNames": true,
-        "resolveJsonModule": true
-    },
-    "include": ["./src/*", "./src/**/*"],
-    "exclude": ["node_modules/"]
-}
+{ "extends": "./node_modules/@zirco-lang/ts-config/tsconfig.json", "include": ["./src/*", "./src/**/*"], "exclude": ["./node_modules/"] }

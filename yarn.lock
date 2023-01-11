@@ -1693,6 +1693,11 @@
   resolved "https://registry.yarnpkg.com/@zirco-lang/prettier-config/-/prettier-config-0.3.0.tgz#00173fde6840940125411a8ba7c2314f31d186a2"
   integrity sha512-4LT2TgBnYwMvO0MWPjQNXxNxXEw+QeaflU1/kxvKDrAIqCgT0amPBLtoDBqQTpyBB7B/dSxckPrM1i5a/SmQkQ==
 
+"@zirco-lang/ts-config@^0.4.1":
+  version "0.4.1"
+  resolved "https://registry.yarnpkg.com/@zirco-lang/ts-config/-/ts-config-0.4.1.tgz#cc9e2f05af0ebc9e5df7390f7c308f59b7fcc714"
+  integrity sha512-RgzO8u+0FIyXVo3qBiR3XruaXDrgAvM3Y4V39VfbzSdG8ngOi/j21fVxnuzsjqsLwspuRlot/vUzoaeRWSBwuw==
+
 JSONStream@^1.0.4:
   version "1.3.5"
   resolved "https://registry.npmjs.org/JSONStream/-/JSONStream-1.3.5.tgz"
