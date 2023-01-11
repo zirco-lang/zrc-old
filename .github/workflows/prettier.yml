@@ -49,7 +49,7 @@ jobs:
             - name: Run prettier
               run: yarn run prettier:check
 
-            - name: Run actual reformat if chances can be made
+            - name: Run actual reformat if changes can be made
               run: yarn run prettier
               if: ${{ failure() }}
 
