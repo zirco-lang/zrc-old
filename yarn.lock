@@ -1674,10 +1674,10 @@
     "@typescript-eslint/types" "5.48.0"
     eslint-visitor-keys "^3.3.0"
 
-"@zirco-lang/eslint-config@^0.3.0":
-  version "0.3.0"
-  resolved "https://registry.yarnpkg.com/@zirco-lang/eslint-config/-/eslint-config-0.3.0.tgz#9438e1ee5ed0f9ebdbb25d81ba9b8975b1d1d1df"
-  integrity sha512-bGHx+TgEDRSPSwYSChc9wAtDrq4V81K0N9mTYQBTbIIo8XpySPqAJ+2eEVD+uRwIkISjn5H6mjQay7wQPlCrIA==
+"@zirco-lang/eslint-config@^0.4.0":
+  version "0.4.0"
+  resolved "https://registry.yarnpkg.com/@zirco-lang/eslint-config/-/eslint-config-0.4.0.tgz#ad13ed5ea1051d32d232ee3ed56ed3cd4a088650"
+  integrity sha512-jcbT7KnmsWvi6OzNskBam9iTpbUFjGmPhmX0NCnFjUswrtxwVggPQ7tegJBEgFwYOU+Bbyv0myTv9ZNxGk5KSw==
   dependencies:
     "@typescript-eslint/eslint-plugin" "^5.48.0"
     "@typescript-eslint/parser" "^5.48.0"
@@ -1688,10 +1688,10 @@
     eslint-plugin-simple-import-sort "^8.0.0"
     eslint-plugin-unused-imports "^2.0.0"
 
-"@zirco-lang/prettier-config@^0.3.0":
-  version "0.3.0"
-  resolved "https://registry.yarnpkg.com/@zirco-lang/prettier-config/-/prettier-config-0.3.0.tgz#00173fde6840940125411a8ba7c2314f31d186a2"
-  integrity sha512-4LT2TgBnYwMvO0MWPjQNXxNxXEw+QeaflU1/kxvKDrAIqCgT0amPBLtoDBqQTpyBB7B/dSxckPrM1i5a/SmQkQ==
+"@zirco-lang/prettier-config@^0.4.0":
+  version "0.4.0"
+  resolved "https://registry.yarnpkg.com/@zirco-lang/prettier-config/-/prettier-config-0.4.0.tgz#1aa9d03437c6b962bec55651ac62ccda27df7554"
+  integrity sha512-MK8JAHDu+B0AFJQ9n4ly9rc99SEGcQs9TXPS0pInmWIDMaKvMUF3hFQO2+fqjh891b2M1RrMtmtOR1GHMu9wig==
 
 "@zirco-lang/ts-config@^0.4.1":
   version "0.4.1"
