@@ -107,7 +107,7 @@ export default function lex(input: string): Token[] {
         // "Direct" constants e.g. 123, or
         // "Prefixed" constants like 0xFF.
         // More specific comes first, so let's start with prefixed.
-        // We only support 0b and 0d prefixes, so we can first check for a 0.
+        // We only support 0b and 0x prefixes, so we can first check for a 0.
         if (char === "0" && i + 1 < length && (input[i + 1] === "b" || input[i + 1] === "x")) {
             let str = "0";
             const start = i;
