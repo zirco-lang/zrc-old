@@ -16,9 +16,220 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import lex from "../index";
-import lexDirectly from "../lex";
+import "../../../setupJest";
 
-describe("lexer export", () => {
-    it("works as expected", () => expect(lex("2 + 2 = 4")).toEqual(lexDirectly("2 + 2 = 4")));
+import ZircoSyntaxError, { ZircoSyntaxErrorTypes } from "../../lib/structures/errors/ZircoSyntaxError";
+import lex, { TokenTypes } from "../index";
+
+describe("lex", () => {
+    it("returns none on an empty input", () => expect(lex("")).toEqual([]));
+    describe("simple tokens", () => {
+        it("classifies a single letter as an identifier", () =>
+            expect(lex("a")).toEqual([["a", { type: TokenTypes.Name, position: { start: 0, end: 0 } }]]));
+        it("classifies a single number as a constant", () =>
+            expect(lex("1")).toEqual([["1", { type: TokenTypes.Number, position: { start: 0, end: 0 } }]]));
+        it("classifies a single-letter string as a string", () =>
+            expect(lex('"a"')).toEqual([['"a"', { type: TokenTypes.String, position: { start: 0, end: 2 } }]]));
+        describe("strings with weird traits", () => {
+            it("errors on string with no end", () =>
+                expect(() => lex('"')).toThrowZircoError(ZircoSyntaxError, ZircoSyntaxErrorTypes.UnclosedString, {
+                    start: 0,
+                    end: 0
+                }));
+            it("should error provided a non-closed string with an escape", () =>
+                expect(() => lex('"a\\')).toThrowZircoError(ZircoSyntaxError, ZircoSyntaxErrorTypes.UnclosedString, {
+                    start: 2,
+                    end: 2
+                }));
+            it("escaped EOF", () =>
+                expect(() => lex('"\\"')).toThrowZircoError(ZircoSyntaxError, ZircoSyntaxErrorTypes.UnclosedString, {
+                    start: 0,
+                    end: 2
+                }));
+            it("works with escaped quote", () =>
+                expect(lex('"\\""')).toEqual([['"\\""', { type: TokenTypes.String, position: { start: 0, end: 3 } }]]));
+        });
+        describe("numerical constant types", () => {
+            it("classifies a decimal number as a constant", () =>
+                expect(lex("111")).toEqual([["111", { type: TokenTypes.Number, position: { start: 0, end: 2 } }]]));
+            it("classifies a hexadecimal number as a constant", () =>
+                expect(lex("0xFF")).toEqual([["0xFF", { type: TokenTypes.Number, position: { start: 0, end: 3 } }]]));
+            it("classifies a binary number as a constant", () =>
+                expect(lex("0b11")).toEqual([["0b11", { type: TokenTypes.Number, position: { start: 0, end: 3 } }]]));
+            it("classifies a number with a decimal as a constant", () =>
+                expect(lex("1.3")).toEqual([["1.3", { type: TokenTypes.Number, position: { start: 0, end: 2 } }]]));
+            it("should error when given a non-binary value in a binary constant", () =>
+                expect(() => lex("0b2")).toThrowZircoError(ZircoSyntaxError, ZircoSyntaxErrorTypes.NumberInvalidCharacter, {
+                    start: 2,
+                    end: 2
+                }));
+            it("should error given a Z in a hex", () =>
+                expect(() => lex("0xZ")).toThrowZircoError(ZircoSyntaxError, ZircoSyntaxErrorTypes.NumberInvalidCharacter, {
+                    start: 2,
+                    end: 2
+                }));
+        });
+        it("operator", () => expect(lex("+")).toEqual([["+", { type: TokenTypes.Operator, position: { start: 0, end: 0 } }]]));
+    });
+    describe("whitespace trimming", () => {
+        // In this case, it's expected that multiple spaces are merged and start/end indicate them safely.
+        it("one space between NAME tokens", () =>
+            expect(lex("a b")).toEqual([
+                ["a", { type: TokenTypes.Name, position: { start: 0, end: 0 } }],
+                ["b", { type: TokenTypes.Name, position: { start: 2, end: 2 } }]
+            ]));
+        it("space between CONSTANT_NUMBERs", () =>
+            expect(lex("1 2")).toEqual([
+                ["1", { type: TokenTypes.Number, position: { start: 0, end: 0 } }],
+                ["2", { type: TokenTypes.Number, position: { start: 2, end: 2 } }]
+            ]));
+        it("space between hexadecimal CONSTANT_NUMBERs", () =>
+            expect(lex("0xF 0xF")).toEqual([
+                ["0xF", { type: TokenTypes.Number, position: { start: 0, end: 2 } }],
+                ["0xF", { type: TokenTypes.Number, position: { start: 4, end: 6 } }]
+            ]));
+        it("space between STRINGs", () =>
+            expect(lex('"a" "b"')).toEqual([
+                ['"a"', { type: TokenTypes.String, position: { start: 0, end: 2 } }],
+                ['"b"', { type: TokenTypes.String, position: { start: 4, end: 6 } }]
+            ]));
+        it("one tab between tokens", () =>
+            expect(lex("a\tb")).toEqual([
+                ["a", { type: TokenTypes.Name, position: { start: 0, end: 0 } }],
+                ["b", { type: TokenTypes.Name, position: { start: 2, end: 2 } }]
+            ]));
+        it("one newline between tokens", () =>
+            expect(lex("a\nb")).toEqual([
+                ["a", { type: TokenTypes.Name, position: { start: 0, end: 0 } }],
+                ["b", { type: TokenTypes.Name, position: { start: 2, end: 2 } }]
+            ]));
+        it("multiple spaces between tokens", () =>
+            expect(lex("a  b")).toEqual([
+                ["a", { type: TokenTypes.Name, position: { start: 0, end: 0 } }],
+                ["b", { type: TokenTypes.Name, position: { start: 3, end: 3 } }]
+            ]));
+    });
+    describe("more complex cases", () => {
+        it("identifier with a number", () => expect(lex("a1")).toEqual([["a1", { type: TokenTypes.Name, position: { start: 0, end: 1 } }]]));
+        it("sequential non-operator symbols are separate", () =>
+            expect(lex("$$")).toEqual([
+                ["$", { type: TokenTypes.Other, position: { start: 0, end: 0 } }],
+                ["$", { type: TokenTypes.Other, position: { start: 1, end: 1 } }]
+            ]));
+        it("letter in a number", () =>
+            expect(() => lex("1a")).toThrowZircoError(ZircoSyntaxError, ZircoSyntaxErrorTypes.NumberInvalidCharacter, {
+                start: 1,
+                end: 1
+            }));
+        it("no whitespace change in token type", () =>
+            expect(lex("a+b")).toEqual([
+                ["a", { type: TokenTypes.Name, position: { start: 0, end: 0 } }],
+                ["+", { type: TokenTypes.Operator, position: { start: 1, end: 1 } }],
+                ["b", { type: TokenTypes.Name, position: { start: 2, end: 2 } }]
+            ]));
+        it("whitespace change in token type", () =>
+            expect(lex("a + b")).toEqual([
+                ["a", { type: TokenTypes.Name, position: { start: 0, end: 0 } }],
+                ["+", { type: TokenTypes.Operator, position: { start: 2, end: 2 } }],
+                ["b", { type: TokenTypes.Name, position: { start: 4, end: 4 } }]
+            ]));
+        it("multiple sequential decimals should fail", () =>
+            expect(() => lex("1..")).toThrowZircoError(ZircoSyntaxError, ZircoSyntaxErrorTypes.NumberMultipleDecimalPoints, {
+                start: 0,
+                end: 2
+            }));
+        it("multiple decimals should fail", () =>
+            expect(() => lex("1.2.")).toThrowZircoError(ZircoSyntaxError, ZircoSyntaxErrorTypes.NumberMultipleDecimalPoints, {
+                start: 0,
+                end: 3
+            }));
+        it("opening but not a value for a constant number", () =>
+            expect(() => lex("0x")).toThrowZircoError(ZircoSyntaxError, ZircoSyntaxErrorTypes.NumberPrefixWithNoValue, {
+                start: 1,
+                end: 1
+            }));
+        it("sequential strings", () =>
+            expect(lex('"a""b"')).toEqual([
+                ['"a"', { type: TokenTypes.String, position: { start: 0, end: 2 } }],
+                ['"b"', { type: TokenTypes.String, position: { start: 3, end: 5 } }]
+            ]));
+        it("string then identifier", () =>
+            expect(lex('"a"b')).toEqual([
+                ['"a"', { type: TokenTypes.String, position: { start: 0, end: 2 } }],
+                ["b", { type: TokenTypes.Name, position: { start: 3, end: 3 } }]
+            ]));
+        it("identifier then string", () =>
+            expect(lex('a"b"')).toEqual([
+                ["a", { type: TokenTypes.Name, position: { start: 0, end: 0 } }],
+                ['"b"', { type: TokenTypes.String, position: { start: 1, end: 3 } }]
+            ]));
+
+        it("underscores in numbers", () => expect(lex("1_2")).toEqual([["1_2", { type: TokenTypes.Number, position: { start: 0, end: 2 } }]]));
+    });
+
+    describe("comments", () => {
+        describe("single-line", () => {
+            it("simple single-line on its own (w/ space)", () => expect(lex("// a")).toEqual([]));
+            it("simple single-line on its own (w/o space)", () => expect(lex("//a")).toEqual([]));
+            it("simple single-line with trailing space", () => expect(lex("// a ")).toEqual([]));
+            it("simple single line with token before", () =>
+                expect(lex("a// b")).toEqual([["a", { type: TokenTypes.Name, position: { start: 0, end: 0 } }]]));
+            it("simple single line with token before (+ space)", () =>
+                expect(lex("a /// b")).toEqual([["a", { type: TokenTypes.Name, position: { start: 0, end: 0 } }]]));
+        });
+        describe("multi-line", () => {
+            it("on its own", () => expect(lex("/*a*/")).toEqual([]));
+            it("with token before", () => expect(lex("a/*a*/")).toEqual([["a", { type: TokenTypes.Name, position: { start: 0, end: 0 } }]]));
+            it("with token after", () => expect(lex("/*a*/a")).toEqual([["a", { type: TokenTypes.Name, position: { start: 5, end: 5 } }]]));
+            it("with token before and after", () =>
+                expect(lex("a/*a*/a")).toEqual([
+                    ["a", { type: TokenTypes.Name, position: { start: 0, end: 0 } }],
+                    ["a", { type: TokenTypes.Name, position: { start: 6, end: 6 } }]
+                ]));
+            it("with nesting", () => expect(lex("/*a/*a*/a*/")).toEqual([]));
+            it("unclosed", () =>
+                expect(() => lex("/*a")).toThrowZircoError(ZircoSyntaxError, ZircoSyntaxErrorTypes.UnclosedBlockComment, {
+                    start: 0,
+                    end: 2
+                }));
+            it("unclosed (nested)", () =>
+                expect(() => lex("/*a/*a")).toThrowZircoError(ZircoSyntaxError, ZircoSyntaxErrorTypes.UnclosedBlockComment, {
+                    start: 0,
+                    end: 5
+                }));
+            it("newline case", () =>
+                expect(lex("a\n//a\na")).toEqual([
+                    ["a", { type: TokenTypes.Name, position: { start: 0, end: 0 } }],
+                    ["a", { type: TokenTypes.Name, position: { start: 6, end: 6 } }]
+                ]));
+            it("block comment start marker within a line-comment", () => expect(lex("///*")).toEqual([]));
+            it("un-started block comment end", () =>
+                expect(lex("*/")).toEqual([
+                    ["*", { type: TokenTypes.Operator, position: { start: 0, end: 0 } }],
+                    ["/", { type: TokenTypes.Operator, position: { start: 1, end: 1 } }]
+                ]));
+        });
+    });
+
+    describe("two-character operators", () => {
+        const MC_OPS = [
+            ["addition assignment", "+="],
+            ["subtraction assignment", "-="],
+            ["multiplication assignment", "*="],
+            ["division assignment", "/="],
+            ["increment", "++"],
+            ["decrement", "--"],
+            ["equality", "=="],
+            ["inequality", "!="],
+            ["less than or equal", "<="],
+            ["greater than or equal", ">="],
+            ["logical and", "&&"],
+            ["logical or", "||"],
+            ["bit shift left", "<<"],
+            ["bit shift right", ">>"],
+            ["exponent", "**"]
+        ];
+        for (const [name, op] of MC_OPS)
+            it(name, () => expect(lex(op)).toEqual([[op, { type: TokenTypes.Operator, position: { start: 0, end: 1 } }]]));
+    });
 });
