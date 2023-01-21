@@ -57,17 +57,33 @@ export enum ZircoSyntaxErrorTypes {
     UnclosedBlockComment
 }
 
+interface ZircoSyntaxErrorStringPrototypes {
+    // @typescript-eslint/ban-types encourages us using Record<string, never> instead of {}
+    [ZircoSyntaxErrorTypes.UnclosedString]: Record<string, never>;
+    [ZircoSyntaxErrorTypes.NumberMultipleDecimalPoints]: { n: number };
+    [ZircoSyntaxErrorTypes.NumberPrefixWithNoValue]: Record<string, never>;
+    [ZircoSyntaxErrorTypes.NumberInvalidCharacter]: Record<string, never>;
+    [ZircoSyntaxErrorTypes.UnclosedBlockComment]: Record<string, never>;
+}
+
 /** Represents a syntax error. */
-export default class ZircoSyntaxError extends Error {
+export default class ZircoSyntaxError<T extends ZircoSyntaxErrorTypes> extends Error {
+    public static strings: { [k in ZircoSyntaxErrorTypes]: (data: ZircoSyntaxErrorStringPrototypes[k]) => string } = {
+        [ZircoSyntaxErrorTypes.UnclosedString]: () => "Unclosed string",
+        [ZircoSyntaxErrorTypes.NumberMultipleDecimalPoints]: ({ n }) => `Number literal has multiple (${n}) decimal points`,
+        [ZircoSyntaxErrorTypes.NumberPrefixWithNoValue]: () => `Number literal has a floating base prefix with no value after it`,
+        // TODO: Show which character triggered the error?
+        [ZircoSyntaxErrorTypes.NumberInvalidCharacter]: ({}) => `Invalid character in number literal`,
+        [ZircoSyntaxErrorTypes.UnclosedBlockComment]: () => "Unclosed block comment"
+    };
+
     /** The positioning information for this error. */
     public position: StringPosition;
     /** A ZircoSyntaxErrorType that represents the type code of this error. */
     public type: ZircoSyntaxErrorTypes;
-    // assigned by super()
-    public message!: keyof typeof ZircoSyntaxErrorTypes;
 
-    public constructor(type: ZircoSyntaxErrorTypes, position: StringPosition) {
-        super(ZircoSyntaxErrorTypes[type]);
+    public constructor(type: T, position: StringPosition, args: ZircoSyntaxErrorStringPrototypes[T]) {
+        super(ZircoSyntaxError.strings[type](args));
         this.type = type;
         this.name = "ZircoSyntaxError";
         this.position = position;
