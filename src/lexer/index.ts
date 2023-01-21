@@ -17,6 +17,7 @@
  */
 
 import ZircoSyntaxError, { ZircoSyntaxErrorTypes } from "../lib/structures/errors/ZircoSyntaxError";
+import type Interval from "../lib/types/Interval";
 
 /** Represents all possible types for a Token. */
 export enum TokenTypes {
@@ -32,15 +33,10 @@ export enum TokenTypes {
     Other
 }
 
-export interface StringPosition {
-    start: number;
-    end: number;
-}
-
 /** Describes a Token's data packet. */
 export interface TokenData {
     type: TokenTypes;
-    position: StringPosition;
+    position: Interval;
 }
 /** Is a token. Wow. */
 export type Token = [string, TokenData];

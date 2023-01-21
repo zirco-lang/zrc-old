@@ -16,7 +16,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import type { StringPosition } from "../../../lexer/";
+import type Interval from "../../../lib/types/Interval";
 import { toTitleCase } from "../../stringHelpers";
 
 export enum ZircoSyntaxErrorTypes {
@@ -80,11 +80,11 @@ export default class ZircoSyntaxError<T extends ZircoSyntaxErrorTypes> extends E
     };
 
     /** The positioning information for this error. */
-    public position: StringPosition;
+    public position: Interval;
     /** A ZircoSyntaxErrorType that represents the type code of this error. */
     public type: ZircoSyntaxErrorTypes;
 
-    public constructor(type: T, position: StringPosition, args: ZircoSyntaxErrorStringPrototypes[T]) {
+    public constructor(type: T, position: Interval, args: ZircoSyntaxErrorStringPrototypes[T]) {
         super(ZircoSyntaxError.strings[type](args));
         this.type = type;
         this.name = "ZircoSyntaxError";
