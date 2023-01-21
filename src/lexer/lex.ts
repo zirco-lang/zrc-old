@@ -116,16 +116,23 @@ export default function lex(input: string): Token[] {
             let str = "0";
             const start = i;
             char = input[++i];
+            const typeOfLiteral = char === "x" ? "hexadecimal" : "binary";
             str += char;
 
-            if (i + 1 >= length) throw new ZircoSyntaxError(ZircoSyntaxErrorTypes.NumberPrefixWithNoValue, { start: i, end: i + 1 }, {});
+            if (i + 1 >= length)
+                throw new ZircoSyntaxError(ZircoSyntaxErrorTypes.NumberPrefixWithNoValue, { start: i, end: i + 1 }, { typeOfLiteral });
 
             const matchReg = char === "b" ? /[01]/ : /[0-9a-fA-F]/;
 
             while (/[a-zA-Z0-9]/.test(input[i + 1])) {
                 char = input[++i];
 
-                if (!matchReg.test(char)) throw new ZircoSyntaxError(ZircoSyntaxErrorTypes.NumberInvalidCharacter, { start: i, end: i + 1 }, {});
+                if (!matchReg.test(char))
+                    throw new ZircoSyntaxError(
+                        ZircoSyntaxErrorTypes.NumberInvalidCharacter,
+                        { start: i, end: i + 1 },
+                        { typeOfLiteral, invalidCharacter: char }
+                    );
 
                 str += char;
                 if (i + 1 >= length) break;
@@ -142,7 +149,12 @@ export default function lex(input: string): Token[] {
             let numberOfDecimalPointsEncountered = 0;
 
             while (/[0-9A-Za-z._]/.test(char)) {
-                if (/[^0-9._]/.test(char)) throw new ZircoSyntaxError(ZircoSyntaxErrorTypes.NumberInvalidCharacter, { start: i, end: i + 1 }, {});
+                if (/[^0-9._]/.test(char))
+                    throw new ZircoSyntaxError(
+                        ZircoSyntaxErrorTypes.NumberInvalidCharacter,
+                        { start: i, end: i + 1 },
+                        { typeOfLiteral: "decimal", invalidCharacter: char }
+                    );
 
                 if (char === ".") numberOfDecimalPointsEncountered++;
 

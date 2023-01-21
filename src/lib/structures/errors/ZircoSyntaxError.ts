@@ -17,6 +17,7 @@
  */
 
 import type { StringPosition } from "../../../lexer/lex";
+import { toTitleCase } from "../../stringHelpers";
 
 export enum ZircoSyntaxErrorTypes {
     /**
@@ -61,8 +62,8 @@ interface ZircoSyntaxErrorStringPrototypes {
     // @typescript-eslint/ban-types encourages us using Record<string, never> instead of {}
     [ZircoSyntaxErrorTypes.UnclosedString]: Record<string, never>;
     [ZircoSyntaxErrorTypes.NumberMultipleDecimalPoints]: { n: number };
-    [ZircoSyntaxErrorTypes.NumberPrefixWithNoValue]: Record<string, never>;
-    [ZircoSyntaxErrorTypes.NumberInvalidCharacter]: Record<string, never>;
+    [ZircoSyntaxErrorTypes.NumberPrefixWithNoValue]: { typeOfLiteral: "hexadecimal" | "binary" };
+    [ZircoSyntaxErrorTypes.NumberInvalidCharacter]: { typeOfLiteral: "hexadecimal" | "binary" | "decimal"; invalidCharacter: string };
     [ZircoSyntaxErrorTypes.UnclosedBlockComment]: Record<string, never>;
 }
 
@@ -71,9 +72,10 @@ export default class ZircoSyntaxError<T extends ZircoSyntaxErrorTypes> extends E
     public static strings: { [k in ZircoSyntaxErrorTypes]: (data: ZircoSyntaxErrorStringPrototypes[k]) => string } = {
         [ZircoSyntaxErrorTypes.UnclosedString]: () => "Unclosed string",
         [ZircoSyntaxErrorTypes.NumberMultipleDecimalPoints]: ({ n }) => `Number literal has multiple (${n}) decimal points`,
-        [ZircoSyntaxErrorTypes.NumberPrefixWithNoValue]: () => `Number literal has a floating base prefix with no value after it`,
-        // TODO: Show which character triggered the error?
-        [ZircoSyntaxErrorTypes.NumberInvalidCharacter]: ({}) => `Invalid character in number literal`,
+        [ZircoSyntaxErrorTypes.NumberPrefixWithNoValue]: ({ typeOfLiteral }) =>
+            `${toTitleCase(typeOfLiteral)} literal has a floating prefix with no value after it`,
+        [ZircoSyntaxErrorTypes.NumberInvalidCharacter]: ({ typeOfLiteral, invalidCharacter }) =>
+            `Invalid character "${invalidCharacter}" in ${typeOfLiteral} literal`,
         [ZircoSyntaxErrorTypes.UnclosedBlockComment]: () => "Unclosed block comment"
     };
 
