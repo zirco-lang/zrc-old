@@ -62,7 +62,7 @@ interface ZircoSyntaxErrorStringPrototypes {
     [ZircoSyntaxErrorTypes.UnclosedString]: Record<string, never>;
     [ZircoSyntaxErrorTypes.NumberMultipleDecimalPoints]: { n: number };
     [ZircoSyntaxErrorTypes.NumberPrefixWithNoValue]: Record<string, never>;
-    [ZircoSyntaxErrorTypes.NumberInvalidCharacter]: { char: string };
+    [ZircoSyntaxErrorTypes.NumberInvalidCharacter]: Record<string, never>;
     [ZircoSyntaxErrorTypes.UnclosedBlockComment]: Record<string, never>;
 }
 
@@ -72,7 +72,8 @@ export default class ZircoSyntaxError<T extends ZircoSyntaxErrorTypes> extends E
         [ZircoSyntaxErrorTypes.UnclosedString]: () => "Unclosed string",
         [ZircoSyntaxErrorTypes.NumberMultipleDecimalPoints]: ({ n }) => `Number literal has multiple (${n}) decimal points`,
         [ZircoSyntaxErrorTypes.NumberPrefixWithNoValue]: () => `Number literal has a floating base prefix with no value after it`,
-        [ZircoSyntaxErrorTypes.NumberInvalidCharacter]: ({ char }) => `Invalid character ${char} in number literal`,
+        // TODO: Show which character triggered the error?
+        [ZircoSyntaxErrorTypes.NumberInvalidCharacter]: ({}) => `Invalid character in number literal`,
         [ZircoSyntaxErrorTypes.UnclosedBlockComment]: () => "Unclosed block comment"
     };
 
@@ -81,7 +82,7 @@ export default class ZircoSyntaxError<T extends ZircoSyntaxErrorTypes> extends E
     /** A ZircoSyntaxErrorType that represents the type code of this error. */
     public type: ZircoSyntaxErrorTypes;
 
-    public constructor(type: ZircoSyntaxErrorTypes, position: StringPosition, args: ZircoSyntaxErrorStringPrototypes[T] = {}) {
+    public constructor(type: ZircoSyntaxErrorTypes, position: StringPosition, args: ZircoSyntaxErrorStringPrototypes[T]) {
         super(ZircoSyntaxError.strings[type](args));
         this.type = type;
         this.name = "ZircoSyntaxError";
