@@ -82,7 +82,7 @@ export default class ZircoSyntaxError<T extends ZircoSyntaxErrorTypes> extends E
     /** A ZircoSyntaxErrorType that represents the type code of this error. */
     public type: ZircoSyntaxErrorTypes;
 
-    public constructor(type: ZircoSyntaxErrorTypes, position: StringPosition, args: ZircoSyntaxErrorStringPrototypes[T]) {
+    public constructor(type: T, position: StringPosition, args: ZircoSyntaxErrorStringPrototypes[T]) {
         super(ZircoSyntaxError.strings[type](args));
         this.type = type;
         this.name = "ZircoSyntaxError";
