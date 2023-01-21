@@ -152,7 +152,7 @@ export default function lex(input: string): Token[] {
                     ZircoSyntaxErrorTypes.NumberMultipleDecimalPoints,
                     {
                         start,
-                        end: i
+                        end: i + 1
                     },
                     { n: numberOfDecimalPointsEncountered }
                 );

@@ -133,14 +133,14 @@ describe("lex", () => {
                 ["+", { type: TokenTypes.Operator, position: { start: 2, end: 3 } }],
                 ["b", { type: TokenTypes.Name, position: { start: 4, end: 5 } }]
             ]));
-        it("sequential decimals (sequential) should fail", () =>
+        it("multiple sequential decimals should fail", () =>
             expect(() => lex("1..")).toThrowZircoError(ZircoSyntaxError, ZircoSyntaxErrorTypes.NumberMultipleDecimalPoints, {
-                start: 2,
+                start: 0,
                 end: 3
             }));
-        it("sequential decimals (separated) should fail", () =>
+        it("multiple decimals should fail", () =>
             expect(() => lex("1.2.")).toThrowZircoError(ZircoSyntaxError, ZircoSyntaxErrorTypes.NumberMultipleDecimalPoints, {
-                start: 3,
+                start: 0,
                 end: 4
             }));
         it("opening but not a value for a constant number", () =>
