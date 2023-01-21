@@ -135,25 +135,27 @@ export default function lex(input: string): Token[] {
         if (/\d/.test(char)) {
             let str = "";
             const start = i;
-            let hasHadDecimal = false;
+            let numberOfDecimalPointsEncountered = 0;
 
             while (/[0-9A-Za-z._]/.test(char)) {
                 if (/[^0-9._]/.test(char)) throw new ZircoSyntaxError(ZircoSyntaxErrorTypes.NumberInvalidCharacter, { start: i, end: i + 1 });
 
-                if (char === ".") {
-                    // to prevent values like 1.2.3 from passing
-                    if (hasHadDecimal)
-                        throw new ZircoSyntaxError(ZircoSyntaxErrorTypes.NumberMultipleDecimalPoints, {
-                            start: i,
-                            end: i + 1
-                        });
-                    hasHadDecimal = true;
-                }
+                if (char === ".") numberOfDecimalPointsEncountered++;
 
                 str += char;
                 if (i + 1 >= length) break;
                 char = input[++i];
             }
+
+            if (numberOfDecimalPointsEncountered > 1)
+                throw new ZircoSyntaxError(
+                    ZircoSyntaxErrorTypes.NumberMultipleDecimalPoints,
+                    {
+                        start,
+                        end: i
+                    },
+                    { n: numberOfDecimalPointsEncountered }
+                );
 
             if (i + 1 < length) char = input[--i]; // We went one too far, so let's go back.
 
