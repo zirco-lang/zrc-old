@@ -16,10 +16,20 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+import { base64Decode,base64Encode } from "./base64";
+
+export function base64urlToBase64(input: string): string {
+    return input.replace(/-/g, "+").replace(/_/g, "/");
+}
+
+export function base64ToBase64url(input: string): string {
+    return input.replace(/\+/g, "-").replace(/\//g, "_");
+}
+
 export function base64urlEncode(input: string): string {
-    return Buffer.from(input).toString("base64").replace(/\+/g, "-").replace(/\//g, "_");
+    return base64ToBase64url(base64Encode(input));
 }
 
 export function base64urlDecode(input: string): string {
-    return Buffer.from(input.replace(/-/g, "+").replace(/_/g, "/"), "base64").toString();
+    return base64Decode(base64urlToBase64(input));
 }

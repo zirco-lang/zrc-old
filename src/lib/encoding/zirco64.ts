@@ -16,12 +16,20 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import { base64urlEncode, base64urlDecode } from "./base64url";
+import { base64urlDecode,base64urlEncode } from "./base64url";
+
+export function zirco64ToBase64url(input: string): string {
+    return input.replace(/~/g, "-").replace(/\$/g, "=");
+}
+
+export function base64urlToZirco64(input: string): string {
+    return input.replace(/-/g, "~").replace(/[=]/g, "$");
+}
 
 export function zirco64Encode(input: string): string {
-    return base64urlEncode(input).replace(/-/g, "~").replace(/=/g, "$");
+    return base64urlToZirco64(base64urlEncode(input));
 }
 
 export function zirco64Decode(input: string): string {
-    return base64urlDecode(input.replace(/~/g, "-").replace(/\$/g, "="));
+    return base64urlDecode(zirco64ToBase64url(input));
 }

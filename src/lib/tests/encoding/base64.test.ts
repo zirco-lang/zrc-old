@@ -16,14 +16,9 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import "../../../../setupJest"
+import "../../../../setupJest";
 
-import { base64urlEncode, base64urlDecode } from "../../nameMangler/base64url";
+import {base64Decode,base64Encode} from "../../encoding/base64";
 
-describe('base64urlEncode', () => {
-    it.todo('TODO');
-})
-
-describe('base64urlDecode', () => {
-    it.todo('TODO');
-});
+test('base64Decode', () => expect(base64Decode('aGVsbG8gd29ybGQ=')).toBe('hello world'))
+test('base64Encode', () => expect(base64Encode('hello world')).toBe('aGVsbG8gd29ybGQ='))

@@ -16,25 +16,10 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-enum NameManglingTypes {
-    Function,
-    Namespace
+export function base64Encode(input: string): string {
+    return Buffer.from(input).toString("base64");
 }
 
-enum MangledParameterAbbreviation {
-    string
+export function base64Decode(input: string): string {
+    return Buffer.from(input, "base64").toString();
 }
-
-type MangledParameter = [true, string] | [MangledParameterAbbreviation];
-
-interface NameManglingArgs {
-    // return value, then parameters
-    [NameManglingTypes.Function]: [string, MangledParameter[]];
-    [NameManglingTypes.Namespace]: [];
-}
-
-type NameManglingEntry<T extends NameManglingTypes> = [
-    string, // the namespace, property, etc
-    T, // what sort of value this entry is
-    NameManglingArgs[T]
-];
