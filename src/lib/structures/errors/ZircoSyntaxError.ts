@@ -83,11 +83,11 @@ export default class ZircoSyntaxError<T extends ZircoSyntaxErrorTypes> extends E
     public position: Interval;
     /** A ZircoSyntaxErrorType that represents the type code of this error. */
     public type: ZircoSyntaxErrorTypes;
+    public readonly name = "ZircoSyntaxError";
 
     public constructor(type: T, position: Interval, args: ZircoSyntaxErrorStringPrototypes[T]) {
         super(ZircoSyntaxError.strings[type](args));
         this.type = type;
-        this.name = "ZircoSyntaxError";
         this.position = position;
     }
 }
