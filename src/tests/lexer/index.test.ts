@@ -18,8 +18,8 @@
 
 import "../../../setupJest";
 
+import lex, { TokenTypes } from "../../lexer/index";
 import ZircoSyntaxError, { ZircoSyntaxErrorTypes } from "../../lib/structures/errors/ZircoSyntaxError";
-import lex, { TokenTypes } from "../index";
 
 describe("lex", () => {
     it("returns none on an empty input", () => expect(lex("")).toEqual([]));
