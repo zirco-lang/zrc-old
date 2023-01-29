@@ -285,4 +285,20 @@ describe("lex", () => {
         for (const [name, op] of MC_OPS)
             it(name, () => expect(lex(op)).toEqual(lexerOKResult([[op, { type: TokenTypes.Operator, position: { start: 0, end: 1 } }]])));
     });
+
+    it("panics and throws multiple errors", () =>
+        expect(lex("0xZ 0b2")).toEqual(
+            lexerFailedResult([
+                new ZircoSyntaxError(
+                    ZircoSyntaxErrorTypes.NumberInvalidCharacter,
+                    { start: 0, end: 2 },
+                    { invalidCharacter: "Z", typeOfLiteral: "hexadecimal" }
+                ),
+                new ZircoSyntaxError(
+                    ZircoSyntaxErrorTypes.NumberInvalidCharacter,
+                    { start: 3, end: 5 },
+                    { invalidCharacter: "2", typeOfLiteral: "binary" }
+                )
+            ])
+        ));
 });
