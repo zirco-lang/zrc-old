@@ -77,7 +77,7 @@ export default function lex(input: string): LexerOutput {
         while (/[^\s]/.test(input[i]) && i < length) i++;
     }
 
-    function addIssue<T extends ZircoIssueTypes>(issue: ZircoIssue<T>) {
+    function addIssue(issue: ZircoIssue<ZircoIssueTypes>) {
         issues.push(issue);
     }
 
