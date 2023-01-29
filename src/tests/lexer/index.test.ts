@@ -18,12 +18,17 @@
 
 import "../../../setupJest";
 
-import type { OKLexerOutput, Token } from "../../lexer/index";
+import type { FailedLexerOutput, OKLexerOutput, Token } from "../../lexer/index";
 import lex, { TokenTypes } from "../../lexer/index";
 import ZircoSyntaxError, { ZircoSyntaxErrorTypes } from "../../lib/structures/errors/ZircoSyntaxError";
+import type { ZircoIssue, ZircoIssueTypes } from "../../lib/types/ZircoIssue";
 
 function lexerOKResult(tokens: Token[]): OKLexerOutput {
     return { ok: true, issues: [], tokens };
+}
+
+function lexerFailedResult(issues: ZircoIssue<ZircoIssueTypes>[]): FailedLexerOutput {
+    return { ok: false, issues, tokens: null };
 }
 
 describe("lex", () => {
@@ -37,20 +42,15 @@ describe("lex", () => {
             expect(lex('"a"')).toEqual(lexerOKResult([['"a"', { type: TokenTypes.String, position: { start: 0, end: 2 } }]])));
         describe("strings with weird traits", () => {
             it("errors on string with no end", () =>
-                expect(() => lex('"')).toThrowZircoError(ZircoSyntaxError, ZircoSyntaxErrorTypes.UnclosedString, {
-                    start: 0,
-                    end: 0
-                }));
+                expect(lex('"')).toEqual(lexerFailedResult([new ZircoSyntaxError(ZircoSyntaxErrorTypes.UnclosedString, { start: 0, end: 0 }, {})])));
             it("should error provided a non-closed string with an escape", () =>
-                expect(() => lex('"a\\')).toThrowZircoError(ZircoSyntaxError, ZircoSyntaxErrorTypes.UnclosedString, {
-                    start: 2,
-                    end: 2
-                }));
+                expect(lex('"a\\')).toEqual(
+                    lexerFailedResult([new ZircoSyntaxError(ZircoSyntaxErrorTypes.UnclosedString, { start: 2, end: 2 }, {})])
+                ));
             it("escaped EOF", () =>
-                expect(() => lex('"\\"')).toThrowZircoError(ZircoSyntaxError, ZircoSyntaxErrorTypes.UnclosedString, {
-                    start: 0,
-                    end: 2
-                }));
+                expect(lex('"\\"')).toEqual(
+                    lexerFailedResult([new ZircoSyntaxError(ZircoSyntaxErrorTypes.UnclosedString, { start: 0, end: 2 }, {})])
+                ));
             it("works with escaped quote", () =>
                 expect(lex('"\\""')).toEqual(lexerOKResult([['"\\""', { type: TokenTypes.String, position: { start: 0, end: 3 } }]])));
         });
@@ -64,15 +64,25 @@ describe("lex", () => {
             it("classifies a number with a decimal as a constant", () =>
                 expect(lex("1.3")).toEqual(lexerOKResult([["1.3", { type: TokenTypes.Number, position: { start: 0, end: 2 } }]])));
             it("should error when given a non-binary value in a binary constant", () =>
-                expect(() => lex("0b2")).toThrowZircoError(ZircoSyntaxError, ZircoSyntaxErrorTypes.NumberInvalidCharacter, {
-                    start: 2,
-                    end: 2
-                }));
+                expect(lex("0b2")).toEqual(
+                    lexerFailedResult([
+                        new ZircoSyntaxError(
+                            ZircoSyntaxErrorTypes.NumberInvalidCharacter,
+                            { start: 2, end: 2 },
+                            { invalidCharacter: "2", typeOfLiteral: "binary" }
+                        )
+                    ])
+                ));
             it("should error given a Z in a hex", () =>
-                expect(() => lex("0xZ")).toThrowZircoError(ZircoSyntaxError, ZircoSyntaxErrorTypes.NumberInvalidCharacter, {
-                    start: 2,
-                    end: 2
-                }));
+                expect(lex("0xZ")).toEqual(
+                    lexerFailedResult([
+                        new ZircoSyntaxError(
+                            ZircoSyntaxErrorTypes.NumberInvalidCharacter,
+                            { start: 2, end: 2 },
+                            { invalidCharacter: "Z", typeOfLiteral: "hexadecimal" }
+                        )
+                    ])
+                ));
         });
         it("operator", () => expect(lex("+")).toEqual(lexerOKResult([["+", { type: TokenTypes.Operator, position: { start: 0, end: 0 } }]])));
     });
@@ -139,10 +149,15 @@ describe("lex", () => {
                 ])
             ));
         it("letter in a number", () =>
-            expect(() => lex("1a")).toThrowZircoError(ZircoSyntaxError, ZircoSyntaxErrorTypes.NumberInvalidCharacter, {
-                start: 1,
-                end: 1
-            }));
+            expect(lex("1a")).toEqual(
+                lexerFailedResult([
+                    new ZircoSyntaxError(
+                        ZircoSyntaxErrorTypes.NumberInvalidCharacter,
+                        { start: 1, end: 1 },
+                        { invalidCharacter: "a", typeOfLiteral: "decimal" }
+                    )
+                ])
+            ));
         it("no whitespace change in token type", () =>
             expect(lex("a+b")).toEqual(
                 lexerOKResult([
@@ -160,20 +175,19 @@ describe("lex", () => {
                 ])
             ));
         it("multiple sequential decimals should fail", () =>
-            expect(() => lex("1..")).toThrowZircoError(ZircoSyntaxError, ZircoSyntaxErrorTypes.NumberMultipleDecimalPoints, {
-                start: 0,
-                end: 2
-            }));
+            expect(lex("1..")).toEqual(
+                lexerFailedResult([new ZircoSyntaxError(ZircoSyntaxErrorTypes.NumberMultipleDecimalPoints, { start: 0, end: 2 }, { n: 2 })])
+            ));
         it("multiple decimals should fail", () =>
-            expect(() => lex("1.2.")).toThrowZircoError(ZircoSyntaxError, ZircoSyntaxErrorTypes.NumberMultipleDecimalPoints, {
-                start: 0,
-                end: 3
-            }));
+            expect(lex("1.2.")).toEqual(
+                lexerFailedResult([new ZircoSyntaxError(ZircoSyntaxErrorTypes.NumberMultipleDecimalPoints, { start: 0, end: 3 }, { n: 2 })])
+            ));
         it("opening but not a value for a constant number", () =>
-            expect(() => lex("0x")).toThrowZircoError(ZircoSyntaxError, ZircoSyntaxErrorTypes.NumberPrefixWithNoValue, {
-                start: 1,
-                end: 1
-            }));
+            expect(lex("0x")).toEqual(
+                lexerFailedResult([
+                    new ZircoSyntaxError(ZircoSyntaxErrorTypes.NumberPrefixWithNoValue, { start: 0, end: 1 }, { typeOfLiteral: "hexadecimal" })
+                ])
+            ));
         it("sequential strings", () =>
             expect(lex('"a""b"')).toEqual(
                 lexerOKResult([
@@ -225,15 +239,13 @@ describe("lex", () => {
                 ));
             it("with nesting", () => expect(lex("/*a/*a*/a*/")).toEqual(lexerOKResult([])));
             it("unclosed", () =>
-                expect(() => lex("/*a")).toThrowZircoError(ZircoSyntaxError, ZircoSyntaxErrorTypes.UnclosedBlockComment, {
-                    start: 0,
-                    end: 2
-                }));
+                expect(lex("/*a")).toEqual(
+                    lexerFailedResult([new ZircoSyntaxError(ZircoSyntaxErrorTypes.UnclosedBlockComment, { start: 0, end: 2 }, {})])
+                ));
             it("unclosed (nested)", () =>
-                expect(() => lex("/*a/*a")).toThrowZircoError(ZircoSyntaxError, ZircoSyntaxErrorTypes.UnclosedBlockComment, {
-                    start: 0,
-                    end: 5
-                }));
+                expect(lex("/*a/*a")).toEqual(
+                    lexerFailedResult([new ZircoSyntaxError(ZircoSyntaxErrorTypes.UnclosedBlockComment, { start: 0, end: 5 }, {})])
+                ));
             it("newline case", () =>
                 expect(lex("a\n//a\na")).toEqual(
                     lexerOKResult([
