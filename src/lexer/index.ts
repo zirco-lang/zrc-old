@@ -60,6 +60,7 @@ export default function lex(input: string): LexerOutput {
     const tokens: Token[] = [];
     const issues: ZircoIssue<ZircoIssueTypes>[] = [];
     let i = 0;
+    let previousI = -1;
     const length = input.length;
 
     /**
@@ -81,6 +82,13 @@ export default function lex(input: string): LexerOutput {
     }
 
     lexerLoop: for (; i < length; i++) {
+        /* istanbul ignore next */
+        if (previousI >= i)
+            throw new Error(
+                "Potential infinite loop detected in the lexer. This should never happen. Please create an issue on GitHub and include source code that replicates this issue."
+            );
+        previousI = i;
+
         let char = input[i];
 
         // Welcome to the chaos that is Zirco's lexer.
