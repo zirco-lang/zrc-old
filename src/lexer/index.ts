@@ -63,18 +63,20 @@ export default function lex(input: string): LexerOutput {
     let previousI = -1;
     const length = input.length;
 
+    // Define a bunch of lists used later on now, for performance.
+    const singleCharOperators = "+-*/%=!<>(){}[],;:.".split("");
+    const multiCharOperators = ["==", "!=", ">=", "<=", "+=", "-=", "*=", "/=", "++", "--", "||", "&&", "<<", ">>", "**", "->"];
+    const panicTokenBoundaries = ['"', ...singleCharOperators];
     /**
      * Puts the lexer into "panic mode." Call this function when encountering an error
      * to allow a best-effort mechanism at reaching the next token and proceeding.
      */
     function panic() {
-        // Our goal is to synchronize to the next token.
-        // This isn't always going to work 100% perfectly,
-        // but we try our best.
-        // TODO: Detect more types of token boundaries other than whitespace
-        // To simplify, we'll call whitespace our one type of token boundary this
-        // lexer can handle.
-        while (/[^\s]/.test(input[i]) && i < length) i++;
+        while (!panicTokenBoundaries.includes(input[i]) && !/[\s]/.test(input[i]) && i < length) i++;
+        // FIXME: Because after we panic(), the loop will continue and i++ for us,
+        // we do this. Once we remove the "i++" from the lexerLoop's post-iteration,
+        // we can remove this.
+        i--;
     }
 
     function addIssue(issue: ZircoIssue<ZircoIssueTypes>) {
@@ -188,6 +190,7 @@ export default function lex(input: string): LexerOutput {
                             { typeOfLiteral, invalidCharacter: char }
                         )
                     );
+                    i++;
                     panic();
                     continue lexerLoop;
                 }
@@ -215,6 +218,7 @@ export default function lex(input: string): LexerOutput {
                             { typeOfLiteral: "decimal", invalidCharacter: char }
                         )
                     );
+                    i++;
                     panic();
                     continue lexerLoop;
                 }
@@ -237,6 +241,7 @@ export default function lex(input: string): LexerOutput {
                         { n: numberOfDecimalPointsEncountered }
                     )
                 );
+                i++;
                 panic();
                 continue;
             }
@@ -329,7 +334,6 @@ export default function lex(input: string): LexerOutput {
         // They are checked first, so that they don't get confused with
         // multiple single character operators.
         // Examples of these are ++, +=, ==, !=, etc.
-        const multiCharOperators = ["==", "!=", ">=", "<=", "+=", "-=", "*=", "/=", "++", "--", "||", "&&", "<<", ">>", "**", "->"];
 
         let didMatchAnyOperator = false;
         for (const op of multiCharOperators) {
@@ -357,7 +361,6 @@ export default function lex(input: string): LexerOutput {
         // Single-character operators
         // These are operators that are only one character long.
         // Examples of these are +, -, *, /, etc.
-        const singleCharOperators = ["+", "-", "*", "/", "%", "=", "!", "<", ">", "(", ")", "{", "}", "[", "]", ",", ";", ":", "."];
 
         if (singleCharOperators.includes(char)) {
             tokens.push([char, { type: TokenTypes.Operator, position: { start: i, end: i } }]);
