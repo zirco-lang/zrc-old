@@ -80,8 +80,7 @@ export default function lex(input: string): LexerOutput {
         issues.push(issue);
     }
 
-    lexerLoop:
-    for (; i < length; i++) {
+    lexerLoop: for (; i < length; i++) {
         let char = input[i];
 
         // Welcome to the chaos that is Zirco's lexer.
@@ -200,15 +199,17 @@ export default function lex(input: string): LexerOutput {
             let numberOfDecimalPointsEncountered = 0;
 
             while (/[0-9A-Za-z._]/.test(char)) {
-                if (/[^0-9._]/.test(char)){
-                    addIssue( new ZircoSyntaxError(
-                        ZircoSyntaxErrorTypes.NumberInvalidCharacter,
-                        { start: i, end: i },
-                        { typeOfLiteral: "decimal", invalidCharacter: char }
-                    ));
+                if (/[^0-9._]/.test(char)) {
+                    addIssue(
+                        new ZircoSyntaxError(
+                            ZircoSyntaxErrorTypes.NumberInvalidCharacter,
+                            { start: i, end: i },
+                            { typeOfLiteral: "decimal", invalidCharacter: char }
+                        )
+                    );
                     panic();
                     continue lexerLoop;
-                    }
+                }
 
                 if (char === ".") numberOfDecimalPointsEncountered++;
 
@@ -217,15 +218,20 @@ export default function lex(input: string): LexerOutput {
                 char = input[++i];
             }
 
-            if (numberOfDecimalPointsEncountered > 1){
-                addIssue( new ZircoSyntaxError(
-                    ZircoSyntaxErrorTypes.NumberMultipleDecimalPoints,
-                    {
-                        start,
-                        end: i
-                    },
-                    { n: numberOfDecimalPointsEncountered }
-                ));panic();continue}
+            if (numberOfDecimalPointsEncountered > 1) {
+                addIssue(
+                    new ZircoSyntaxError(
+                        ZircoSyntaxErrorTypes.NumberMultipleDecimalPoints,
+                        {
+                            start,
+                            end: i
+                        },
+                        { n: numberOfDecimalPointsEncountered }
+                    )
+                );
+                panic();
+                continue;
+            }
 
             if (i + 1 < length) char = input[--i]; // We went one too far, so let's go back.
 
@@ -270,17 +276,20 @@ export default function lex(input: string): LexerOutput {
                     }
                 } while (i < length - 1); // Keep going until we hit EoF
 
-                if (i >= length - 1){
-                    addIssue( new ZircoSyntaxError(
-                        ZircoSyntaxErrorTypes.UnclosedBlockComment,
-                        {
-                            start,
-                            end: i
-                        },
-                        {}
-                    )); break;
-                // EoF
-                    } else {
+                if (i >= length - 1) {
+                    addIssue(
+                        new ZircoSyntaxError(
+                            ZircoSyntaxErrorTypes.UnclosedBlockComment,
+                            {
+                                start,
+                                end: i
+                            },
+                            {}
+                        )
+                    );
+                    break;
+                    // EoF
+                } else {
                     // next iteration, after skipping the current one (which would be the / character)
                     ++i;
                     continue;

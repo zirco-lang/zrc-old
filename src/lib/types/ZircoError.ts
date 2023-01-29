@@ -24,4 +24,4 @@ type ZircoErrorTypes = ZircoSyntaxErrorTypes;
 // type ZircoError<T extends A | B> = T extends A ? ZircoAError<T> : ZircoBError<T>;
 type ZircoError<T extends ZircoErrorTypes> = ZircoSyntaxError<T>;
 
-export type {ZircoError,ZircoErrorTypes}
+export type { ZircoError, ZircoErrorTypes };

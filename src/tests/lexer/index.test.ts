@@ -86,10 +86,12 @@ describe("lex", () => {
                 ])
             ));
         it("space between CONSTANT_NUMBERs", () =>
-            expect(lex("1 2")).toEqual(lexerOKResult([
-                ["1", { type: TokenTypes.Number, position: { start: 0, end: 0 } }],
-                ["2", { type: TokenTypes.Number, position: { start: 2, end: 2 } }]
-            ])));
+            expect(lex("1 2")).toEqual(
+                lexerOKResult([
+                    ["1", { type: TokenTypes.Number, position: { start: 0, end: 0 } }],
+                    ["2", { type: TokenTypes.Number, position: { start: 2, end: 2 } }]
+                ])
+            ));
         it("space between hexadecimal CONSTANT_NUMBERs", () =>
             expect(lex("0xF 0xF")).toEqual(
                 lexerOKResult([
