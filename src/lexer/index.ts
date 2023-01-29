@@ -80,6 +80,7 @@ export default function lex(input: string): LexerOutput {
         issues.push(issue);
     }
 
+    lexerLoop:
     for (; i < length; i++) {
         let char = input[i];
 
@@ -127,7 +128,7 @@ export default function lex(input: string): LexerOutput {
                     str += char;
                     if (i + 1 >= length) {
                         addIssue(new ZircoSyntaxError(ZircoSyntaxErrorTypes.UnclosedString, { start: i, end: i }, {}));
-                        break;
+                        break lexerLoop;
                     }
                     char = input[++i];
                 }
@@ -136,7 +137,7 @@ export default function lex(input: string): LexerOutput {
 
                 if (i + 1 >= length) {
                     addIssue(new ZircoSyntaxError(ZircoSyntaxErrorTypes.UnclosedString, { start, end: i }, {}));
-                    break;
+                    break lexerLoop;
                 }
 
                 char = input[++i];
@@ -164,7 +165,7 @@ export default function lex(input: string): LexerOutput {
 
             if (i + 1 >= length) {
                 addIssue(new ZircoSyntaxError(ZircoSyntaxErrorTypes.NumberPrefixWithNoValue, { start: i, end: i }, { typeOfLiteral }));
-                break;
+                break lexerLoop;
             }
 
             const matchReg = char === "b" ? /[01]/ : /[0-9a-fA-F]/;
@@ -181,7 +182,7 @@ export default function lex(input: string): LexerOutput {
                         )
                     );
                     panic();
-                    continue;
+                    continue lexerLoop;
                 }
 
                 str += char;
@@ -206,7 +207,7 @@ export default function lex(input: string): LexerOutput {
                         { typeOfLiteral: "decimal", invalidCharacter: char }
                     ));
                     panic();
-                    continue;
+                    continue lexerLoop;
                     }
 
                 if (char === ".") numberOfDecimalPointsEncountered++;
