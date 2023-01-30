@@ -31,6 +31,8 @@ export enum TokenTypes {
     Operator,
     /** Curly & square braces, parentheses, and semicolons. */
     Grouping,
+    /** `<` and `>` */
+    GreaterOrLessThan,
     /** Anything else */
     Other
 }
@@ -283,7 +285,7 @@ export default function lex(input: string): Token[] {
         // Single-character operators
         // These are operators that are only one character long.
         // Examples of these are +, -, *, /, etc.
-        const singleCharOperators = ["+", "-", "*", "/", "%", "=", "!", "<", ">", ",", ":", "."];
+        const singleCharOperators = ["+", "-", "*", "/", "%", "=", "!", ",", ":", "."];
 
         if (singleCharOperators.includes(char)) {
             output.push([char, { type: TokenTypes.Operator, position: { start: i, end: i } }]);
@@ -294,6 +296,11 @@ export default function lex(input: string): Token[] {
 
         if (groupingTokens.includes(char)) {
             output.push([char, { type: TokenTypes.Grouping, position: { start: i, end: i } }]);
+            continue;
+        }
+
+        if (['<', '>'].includes(char)) {
+            output.push([char, { type: TokenTypes.GreaterOrLessThan, position: { start: i, end: i } } ]);
             continue;
         }
 
