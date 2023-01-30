@@ -47,7 +47,14 @@ export type Token = [string, TokenData];
 
 export default function lex(input: string): Token[] {
     const output: Token[] = [];
-    for (let i = 0, length = input.length; i < length; i++) {
+    for (let i = 0, previousI = -1, length = input.length; i < length; i++) {
+        /* istanbul ignore next */
+        if (previousI >= i)
+            throw new Error(
+                "Potential infinite loop detected in the lexer. This should never happen. Please create an issue on GitHub and include source code that replicates this issue."
+            );
+        previousI = i;
+
         let char = input[i];
 
         // Welcome to the chaos that is Zirco's lexer.
