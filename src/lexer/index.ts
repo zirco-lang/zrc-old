@@ -306,8 +306,8 @@ export default function lex(input: string): Token[] {
             continue;
         }
 
-        if (['<', '>'].includes(char)) {
-            output.push([char, { type: TokenTypes.GreaterOrLessThan, position: { start: i, end: i } } ]);
+        if (["<", ">"].includes(char)) {
+            output.push([char, { type: TokenTypes.GreaterOrLessThan, position: { start: i, end: i } }]);
             continue;
         }
 
