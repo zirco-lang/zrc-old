@@ -18,6 +18,7 @@
 
 import ZircoSyntaxError, { ZircoSyntaxErrorTypes } from "../lib/structures/errors/ZircoSyntaxError";
 import type Interval from "../lib/types/Interval";
+import type { ZircoIssue, ZircoIssueTypes } from "../lib/types/ZircoIssue";
 
 /** Represents all possible types for a Token. */
 export enum TokenTypes {
@@ -41,9 +42,48 @@ export interface TokenData {
 /** Is a token. Wow. */
 export type Token = [string, TokenData];
 
-export default function lex(input: string): Token[] {
-    const output: Token[] = [];
-    for (let i = 0, previousI = -1, length = input.length; i < length; i++) {
+export interface FailedLexerOutput {
+    ok: false;
+    issues: ZircoIssue<ZircoIssueTypes>[];
+    tokens: null;
+}
+
+export interface OKLexerOutput {
+    ok: true;
+    issues: [];
+    tokens: Token[];
+}
+
+export type LexerOutput = FailedLexerOutput | OKLexerOutput;
+
+export default function lex(input: string): LexerOutput {
+    const tokens: Token[] = [];
+    const issues: ZircoIssue<ZircoIssueTypes>[] = [];
+    let i = 0;
+    let previousI = -1;
+    const length = input.length;
+
+    // Define a bunch of lists used later on now, for performance.
+    const singleCharOperators = "+-*/%=!<>(){}[],;:.".split("");
+    const multiCharOperators = ["==", "!=", ">=", "<=", "+=", "-=", "*=", "/=", "++", "--", "||", "&&", "<<", ">>", "**", "->"];
+    const panicTokenBoundaries = ['"', ...singleCharOperators];
+    /**
+     * Puts the lexer into "panic mode." Call this function when encountering an error
+     * to allow a best-effort mechanism at reaching the next token and proceeding.
+     */
+    function panic() {
+        while (!panicTokenBoundaries.includes(input[i]) && !/[\s]/.test(input[i]) && i < length) i++;
+        // FIXME: Because after we panic(), the loop will continue and i++ for us,
+        // we do this. Once we remove the "i++" from the lexerLoop's post-iteration,
+        // we can remove this.
+        i--;
+    }
+
+    function addIssue(issue: ZircoIssue<ZircoIssueTypes>) {
+        issues.push(issue);
+    }
+
+    lexerLoop: for (; i < length; i++) {
         /* istanbul ignore next */
         if (previousI >= i)
             throw new Error(
@@ -74,15 +114,19 @@ export default function lex(input: string): Token[] {
             let str = "";
             const start = i;
 
-            if (i + 1 >= length)
-                throw new ZircoSyntaxError(
-                    ZircoSyntaxErrorTypes.UnclosedString,
-                    {
-                        start,
-                        end: i
-                    },
-                    {}
+            if (i + 1 >= length) {
+                addIssue(
+                    new ZircoSyntaxError(
+                        ZircoSyntaxErrorTypes.UnclosedString,
+                        {
+                            start,
+                            end: i
+                        },
+                        {}
+                    )
                 );
+                break;
+            }
 
             char = input[++i];
 
@@ -91,19 +135,25 @@ export default function lex(input: string): Token[] {
                 if (char === "\\") {
                     // This will add the next character to the string, regardless of what it is, even if it's a ".
                     str += char;
-                    if (i + 1 >= length) throw new ZircoSyntaxError(ZircoSyntaxErrorTypes.UnclosedString, { start: i, end: i }, {});
+                    if (i + 1 >= length) {
+                        addIssue(new ZircoSyntaxError(ZircoSyntaxErrorTypes.UnclosedString, { start: i, end: i }, {}));
+                        break lexerLoop;
+                    }
                     char = input[++i];
                 }
 
                 str += char;
 
-                if (i + 1 >= length) throw new ZircoSyntaxError(ZircoSyntaxErrorTypes.UnclosedString, { start, end: i }, {});
+                if (i + 1 >= length) {
+                    addIssue(new ZircoSyntaxError(ZircoSyntaxErrorTypes.UnclosedString, { start, end: i }, {}));
+                    break lexerLoop;
+                }
 
                 char = input[++i];
             }
 
             // We found the end of the string. Let's add it to the output.
-            output.push([`"${str}"`, { type: TokenTypes.String, position: { start, end: i } }]);
+            tokens.push([`"${str}"`, { type: TokenTypes.String, position: { start, end: i } }]);
             continue;
         }
 
@@ -122,25 +172,34 @@ export default function lex(input: string): Token[] {
             const typeOfLiteral = char === "x" ? "hexadecimal" : "binary";
             str += char;
 
-            if (i + 1 >= length) throw new ZircoSyntaxError(ZircoSyntaxErrorTypes.NumberPrefixWithNoValue, { start: i, end: i }, { typeOfLiteral });
+            if (i + 1 >= length) {
+                addIssue(new ZircoSyntaxError(ZircoSyntaxErrorTypes.NumberPrefixWithNoValue, { start: i, end: i }, { typeOfLiteral }));
+                break lexerLoop;
+            }
 
             const matchReg = char === "b" ? /[01]/ : /[0-9a-fA-F]/;
 
             while (/[a-zA-Z0-9]/.test(input[i + 1])) {
                 char = input[++i];
 
-                if (!matchReg.test(char))
-                    throw new ZircoSyntaxError(
-                        ZircoSyntaxErrorTypes.NumberInvalidCharacter,
-                        { start: i, end: i },
-                        { typeOfLiteral, invalidCharacter: char }
+                if (!matchReg.test(char)) {
+                    addIssue(
+                        new ZircoSyntaxError(
+                            ZircoSyntaxErrorTypes.NumberInvalidCharacter,
+                            { start: i, end: i },
+                            { typeOfLiteral, invalidCharacter: char }
+                        )
                     );
+                    i++;
+                    panic();
+                    continue lexerLoop;
+                }
 
                 str += char;
                 if (i + 1 >= length) break;
             }
 
-            output.push([str, { type: TokenTypes.Number, position: { start, end: i } }]);
+            tokens.push([str, { type: TokenTypes.Number, position: { start, end: i } }]);
             continue;
         }
 
@@ -151,12 +210,18 @@ export default function lex(input: string): Token[] {
             let numberOfDecimalPointsEncountered = 0;
 
             while (/[0-9A-Za-z._]/.test(char)) {
-                if (/[^0-9._]/.test(char))
-                    throw new ZircoSyntaxError(
-                        ZircoSyntaxErrorTypes.NumberInvalidCharacter,
-                        { start: i, end: i },
-                        { typeOfLiteral: "decimal", invalidCharacter: char }
+                if (/[^0-9._]/.test(char)) {
+                    addIssue(
+                        new ZircoSyntaxError(
+                            ZircoSyntaxErrorTypes.NumberInvalidCharacter,
+                            { start: i, end: i },
+                            { typeOfLiteral: "decimal", invalidCharacter: char }
+                        )
                     );
+                    i++;
+                    panic();
+                    continue lexerLoop;
+                }
 
                 if (char === ".") numberOfDecimalPointsEncountered++;
 
@@ -165,19 +230,25 @@ export default function lex(input: string): Token[] {
                 char = input[++i];
             }
 
-            if (numberOfDecimalPointsEncountered > 1)
-                throw new ZircoSyntaxError(
-                    ZircoSyntaxErrorTypes.NumberMultipleDecimalPoints,
-                    {
-                        start,
-                        end: i
-                    },
-                    { n: numberOfDecimalPointsEncountered }
+            if (numberOfDecimalPointsEncountered > 1) {
+                addIssue(
+                    new ZircoSyntaxError(
+                        ZircoSyntaxErrorTypes.NumberMultipleDecimalPoints,
+                        {
+                            start,
+                            end: i
+                        },
+                        { n: numberOfDecimalPointsEncountered }
+                    )
                 );
+                i++;
+                panic();
+                continue;
+            }
 
             if (i + 1 < length) char = input[--i]; // We went one too far, so let's go back.
 
-            output.push([str, { type: TokenTypes.Number, position: { start, end: i } }]);
+            tokens.push([str, { type: TokenTypes.Number, position: { start, end: i } }]);
             continue;
         }
 
@@ -218,17 +289,20 @@ export default function lex(input: string): Token[] {
                     }
                 } while (i < length - 1); // Keep going until we hit EoF
 
-                if (i >= length - 1)
-                    throw new ZircoSyntaxError(
-                        ZircoSyntaxErrorTypes.UnclosedBlockComment,
-                        {
-                            start,
-                            end: i
-                        },
-                        {}
+                if (i >= length - 1) {
+                    addIssue(
+                        new ZircoSyntaxError(
+                            ZircoSyntaxErrorTypes.UnclosedBlockComment,
+                            {
+                                start,
+                                end: i
+                            },
+                            {}
+                        )
                     );
-                // EoF
-                else {
+                    break;
+                    // EoF
+                } else {
                     // next iteration, after skipping the current one (which would be the / character)
                     ++i;
                     continue;
@@ -251,7 +325,7 @@ export default function lex(input: string): Token[] {
 
             if (i + 1 < length) char = input[--i]; // We went one too far, so let's go back.
 
-            output.push([str, { type: TokenTypes.Name, position: { start, end: i } }]);
+            tokens.push([str, { type: TokenTypes.Name, position: { start, end: i } }]);
             continue;
         }
 
@@ -260,7 +334,6 @@ export default function lex(input: string): Token[] {
         // They are checked first, so that they don't get confused with
         // multiple single character operators.
         // Examples of these are ++, +=, ==, !=, etc.
-        const multiCharOperators = ["==", "!=", ">=", "<=", "+=", "-=", "*=", "/=", "++", "--", "||", "&&", "<<", ">>", "**", "->"];
 
         let didMatchAnyOperator = false;
         for (const op of multiCharOperators) {
@@ -277,7 +350,7 @@ export default function lex(input: string): Token[] {
 
             if (didMatchCurrent) {
                 // We found a match! Let's add it to the output.
-                output.push([op, { type: TokenTypes.Operator, position: { start: i, end: i + op.length - 1 } }]);
+                tokens.push([op, { type: TokenTypes.Operator, position: { start: i, end: i + op.length - 1 } }]);
                 i += op.length - 1;
                 didMatchAnyOperator = true;
                 break;
@@ -288,15 +361,15 @@ export default function lex(input: string): Token[] {
         // Single-character operators
         // These are operators that are only one character long.
         // Examples of these are +, -, *, /, etc.
-        const singleCharOperators = ["+", "-", "*", "/", "%", "=", "!", "<", ">", "(", ")", "{", "}", "[", "]", ",", ";", ":", "."];
 
         if (singleCharOperators.includes(char)) {
-            output.push([char, { type: TokenTypes.Operator, position: { start: i, end: i } }]);
+            tokens.push([char, { type: TokenTypes.Operator, position: { start: i, end: i } }]);
             continue;
         }
 
         // Anything else is an OTHER
-        output.push([char, { type: TokenTypes.Other, position: { start: i, end: i } }]);
+        tokens.push([char, { type: TokenTypes.Other, position: { start: i, end: i } }]);
     }
-    return output;
+    if (issues.length) return { ok: false, issues, tokens: null };
+    else return { ok: true, issues: [], tokens };
 }
