@@ -119,47 +119,18 @@ export interface TokenWithValue<T extends TokenTypeWithValue, V> extends BaseTok
     value: V;
 }
 
-export type NameToken = TokenWithValue<TokenTypes.Name, string>;
-export type NumberToken = TokenWithValue<TokenTypes.Number, number>;
-export type StringToken = TokenWithValue<TokenTypes.String, string>;
-export type PlusToken = TokenWithoutValue<TokenTypes.Plus>;
-export type MinusToken = TokenWithoutValue<TokenTypes.Minus>;
-export type StarToken = TokenWithoutValue<TokenTypes.Star>;
-export type SlashToken = TokenWithoutValue<TokenTypes.Slash>;
-export type PercentToken = TokenWithoutValue<TokenTypes.Percent>;
-export type EqualsToken = TokenWithoutValue<TokenTypes.Equals>;
-export type ExclamationToken = TokenWithoutValue<TokenTypes.Exclamation>;
-export type LessThanToken = TokenWithoutValue<TokenTypes.LessThan>;
-export type GreaterThanToken = TokenWithoutValue<TokenTypes.GreaterThan>;
-export type LeftParenToken = TokenWithoutValue<TokenTypes.LeftParen>;
-export type RightParenToken = TokenWithoutValue<TokenTypes.RightParen>;
-export type LeftBraceToken = TokenWithoutValue<TokenTypes.LeftBrace>;
-export type RightBraceToken = TokenWithoutValue<TokenTypes.RightBrace>;
-export type LeftBracketToken = TokenWithoutValue<TokenTypes.LeftBracket>;
-export type RightBracketToken = TokenWithoutValue<TokenTypes.RightBracket>;
-export type CommaToken = TokenWithoutValue<TokenTypes.Comma>;
-export type SemicolonToken = TokenWithoutValue<TokenTypes.Semicolon>;
-export type ColonToken = TokenWithoutValue<TokenTypes.Colon>;
-export type DotToken = TokenWithoutValue<TokenTypes.Dot>;
-export type EqualsEqualsToken = TokenWithoutValue<TokenTypes.EqualsEquals>;
-export type ExclamationEqualsToken = TokenWithoutValue<TokenTypes.ExclamationEquals>;
-export type GreaterThanEqualsToken = TokenWithoutValue<TokenTypes.GreaterThanEquals>;
-export type LessThanEqualsToken = TokenWithoutValue<TokenTypes.LessThanEquals>;
-export type PlusEqualsToken = TokenWithoutValue<TokenTypes.PlusEquals>;
-export type MinusEqualsToken = TokenWithoutValue<TokenTypes.MinusEquals>;
-export type StarEqualsToken = TokenWithoutValue<TokenTypes.StarEquals>;
-export type SlashEqualsToken = TokenWithoutValue<TokenTypes.SlashEquals>;
-export type PlusPlusToken = TokenWithoutValue<TokenTypes.PlusPlus>;
-export type MinusMinusToken = TokenWithoutValue<TokenTypes.MinusMinus>;
-export type PipePipeToken = TokenWithoutValue<TokenTypes.PipePipe>;
-export type AmpersandAmpersandToken = TokenWithoutValue<TokenTypes.AmpersandAmpersand>;
-export type LessThanLessThanToken = TokenWithoutValue<TokenTypes.LessThanLessThan>;
-export type GreaterThanGreaterThanToken = TokenWithoutValue<TokenTypes.GreaterThanGreaterThan>;
-export type StarStarToken = TokenWithoutValue<TokenTypes.StarStar>;
-export type MinusGreaterThanToken = TokenWithoutValue<TokenTypes.MinusGreaterThan>;
-export type OtherToken = TokenWithoutValue<TokenTypes.Other>;
+export interface TokenTypeValues {
+    [TokenTypes.Name]: string;
+    [TokenTypes.Number]: number;
+    [TokenTypes.String]: string;
+}
 
 export type ValueLessToken = TokenWithoutValue<TokenTypeWithoutValue>;
-export type ValueToken = NumberToken | StringToken | NameToken;
-
+export type ValueToken = TokenWithValue<TokenTypeWithValue, TokenTypeValues[TokenTypeWithValue]>;
 export type Token = ValueLessToken | ValueToken;
+
+export type Tokens = {
+    [k in TokenTypeWithoutValue]: TokenWithoutValue<k>;
+} & {
+    [k in TokenTypeWithValue]: TokenWithValue<k, TokenTypeValues[k]>;
+}

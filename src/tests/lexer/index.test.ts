@@ -18,7 +18,7 @@
 
 import type { FailedLexerOutput, OKLexerOutput } from "../../lexer/index";
 import lex from "../../lexer/index";
-import type { NameToken, NumberToken, OtherToken, StringToken, Token, TokenTypeWithoutValue, TokenWithoutValue } from "../../lexer/tokens";
+import type { Token, Tokens, TokenTypeWithoutValue, TokenWithoutValue } from "../../lexer/tokens";
 import { TokenTypes } from "../../lexer/tokens";
 import ZircoSyntaxError, { ZircoSyntaxErrorTypes } from "../../lib/structures/errors/ZircoSyntaxError";
 import type Interval from "../../lib/types/Interval";
@@ -33,9 +33,9 @@ function lexerFailedResult(issues: ZircoIssue<ZircoIssueTypes>[]): FailedLexerOu
 }
 
 const interval = (start: number, end: number): Interval => ({ start, end });
-const name = (name: string, position: Interval): NameToken => ({ type: TokenTypes.Name, raw: name, value: name, position });
-const number = (value: number, raw: string, position: Interval): NumberToken => ({ type: TokenTypes.Number, raw, value, position });
-const string = (value: string, raw: string, position: Interval): StringToken => ({ type: TokenTypes.String, raw, value, position });
+const name = (name: string, position: Interval): Tokens[TokenTypes.Name] => ({ type: TokenTypes.Name, raw: name, value: name, position });
+const number = (value: number, raw: string, position: Interval): Tokens[TokenTypes.Number] => ({ type: TokenTypes.Number, raw, value, position });
+const string = (value: string, raw: string, position: Interval): Tokens[TokenTypes.String] => ({ type: TokenTypes.String, raw, value, position });
 
 const tokenWithoutValueFactory =
     <T extends TokenTypeWithoutValue>(type: T, raw: string) =>
@@ -77,7 +77,7 @@ const doubleLessThan = tokenWithoutValueFactory(TokenTypes.LessThanLessThan, "<<
 const doubleGreaterThan = tokenWithoutValueFactory(TokenTypes.GreaterThanGreaterThan, ">>");
 const minusGreaterThan = tokenWithoutValueFactory(TokenTypes.MinusGreaterThan, "->");
 
-const other = (raw: string, position: Interval): OtherToken => ({ type: TokenTypes.Other, raw, position });
+const other = (raw: string, position: Interval): Tokens[TokenTypes.Other] => ({ type: TokenTypes.Other, raw, position });
 
 describe("lex", () => {
     it("returns none on an empty input", () => expect(lex("")).toEqual(lexerOKResult([])));
