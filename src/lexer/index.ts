@@ -17,30 +17,9 @@
  */
 
 import ZircoSyntaxError, { ZircoSyntaxErrorTypes } from "../lib/structures/errors/ZircoSyntaxError";
-import type Interval from "../lib/types/Interval";
 import type { ZircoIssue, ZircoIssueTypes } from "../lib/types/ZircoIssue";
-
-/** Represents all possible types for a Token. */
-export enum TokenTypes {
-    /** Any identifier or keyword. */
-    Name,
-    /** Any numerical constant. */
-    Number,
-    /** A string. */
-    String,
-    /** An operator or syntax component */
-    Operator,
-    /** Anything else */
-    Other
-}
-
-/** Describes a Token's data packet. */
-export interface TokenData {
-    type: TokenTypes;
-    position: Interval;
-}
-/** Is a token. Wow. */
-export type Token = [string, TokenData];
+import type { Token } from "./tokens";
+import { TokenTypes } from "./tokens";
 
 export interface FailedLexerOutput {
     ok: false;
@@ -56,10 +35,7 @@ export interface OKLexerOutput {
 
 export type LexerOutput = FailedLexerOutput | OKLexerOutput;
 
-// Define a bunch of lists used later on now, for performance.
-const singleCharOperators = "+-*/%=!<>(){}[],;:.".split("");
-const multiCharOperators = ["==", "!=", ">=", "<=", "+=", "-=", "*=", "/=", "++", "--", "||", "&&", "<<", ">>", "**", "->"];
-const panicTokenBoundaries = ['"', ...singleCharOperators];
+const panicTokenBoundaries = '"+-*/%=!<>(){}[],;:.'.split("");
 
 export default function lex(input: string): LexerOutput {
     const output: Token[] = [];
@@ -88,7 +64,9 @@ export default function lex(input: string): LexerOutput {
     // https://github.com/microsoft/TypeScript/blob/1ed0a5ac4b49971e4698d5388f7760cbaa0615ac/src/compiler/parser.ts#L2102-L2107
     const tokens = {
         current: () => input[i],
+        currentTwo: () => tokens.current() + tokens.next(),
         consume: () => input[i++],
+        consumeTwo: () => tokens.consume() + tokens.consume(),
         next: () => input[i + 1],
         atEOF: () => i >= length
     };
@@ -114,7 +92,8 @@ export default function lex(input: string): LexerOutput {
         // If the first character is a ", then we know it's a string.
         if (tokens.current() === '"') {
             const start = i;
-            let str = tokens.consume();
+            let raw = tokens.consume();
+            let contents = "";
 
             if (tokens.atEOF()) {
                 addIssue(
@@ -134,14 +113,15 @@ export default function lex(input: string): LexerOutput {
             while (tokens.current() !== '"') {
                 if (tokens.current() === "\\") {
                     // This will add the next character to the string, regardless of what it is, even if it's a ".
-                    str += tokens.consume();
+                    raw += tokens.consume();
                     if (tokens.atEOF()) {
                         addIssue(new ZircoSyntaxError(ZircoSyntaxErrorTypes.UnclosedString, { start: i, end: i }, {}));
                         break lexerLoop;
                     }
                 }
 
-                str += tokens.consume();
+                contents += tokens.current();
+                raw += tokens.consume();
 
                 if (tokens.atEOF()) {
                     addIssue(new ZircoSyntaxError(ZircoSyntaxErrorTypes.UnclosedString, { start, end: i }, {}));
@@ -150,10 +130,9 @@ export default function lex(input: string): LexerOutput {
             }
 
             // Consume the final closing quote
-            str += tokens.consume();
+            raw += tokens.consume();
 
-            // We found the end of the string. Let's add it to the output.
-            output.push([`${str}`, { type: TokenTypes.String, position: { start, end: i - 1 } }]);
+            output.push({ type: TokenTypes.String, raw: raw, value: contents, position: { start, end: i - 1 } });
             continue;
         }
 
@@ -196,7 +175,12 @@ export default function lex(input: string): LexerOutput {
                 if (tokens.atEOF()) break;
             }
 
-            output.push([str, { type: TokenTypes.Number, position: { start, end: i - 1 } }]);
+            output.push({
+                type: TokenTypes.Number,
+                raw: str,
+                value: parseInt(str.substring(2), typeOfLiteral === "binary" ? 2 : 16),
+                position: { start, end: i - 1 }
+            });
             continue;
         }
 
@@ -242,7 +226,7 @@ export default function lex(input: string): LexerOutput {
                 continue;
             }
 
-            output.push([str, { type: TokenTypes.Number, position: { start, end: i - 1 } }]);
+            output.push({ type: TokenTypes.Number, raw: str, value: parseFloat(str.replace(/_/g, "")), position: { start, end: i - 1 } });
             continue;
         }
 
@@ -312,45 +296,129 @@ export default function lex(input: string): LexerOutput {
                 if (tokens.atEOF()) break;
             }
 
-            output.push([str, { type: TokenTypes.Name, position: { start, end: i - 1 } }]);
+            output.push({ type: TokenTypes.Name, raw: str, value: str, position: { start, end: i - 1 } });
             continue;
         }
 
-        // Multi-character operators
-        // These are operators that are more than one character long.
-        // They are checked first, so that they don't get confused with
-        // multiple single character operators.
-        // Examples of these are ++, +=, ==, !=, etc.
-        for (const op of multiCharOperators) {
-            let didMatchCurrent = true;
-
-            if (i + op.length - 1 >= length) continue; // We can't match this operator, it's too long.
-
-            for (let j = 0; j < op.length; j++)
-                // If the current character doesn't match the current operator, then we can skip this operator.
-                if (input[i + j][0] !== op[j]) {
-                    didMatchCurrent = false;
-                    break;
-                }
-
-            if (didMatchCurrent) {
-                // We found a match! Let's add it to the output.
-                output.push([op, { type: TokenTypes.Operator, position: { start: i, end: i + op.length - 1 } }]);
-                i += op.length;
-                continue lexerLoop;
-            }
+        // Two-character operators
+        // By putting the position before the consumeTwo(), i remains unchanged until afterwards.
+        switch (tokens.currentTwo()) {
+            case "==":
+                output.push({ type: TokenTypes.EqualsEquals, position: { start: i, end: i + 1 }, raw: tokens.consumeTwo() });
+                continue;
+            case "!=":
+                output.push({ type: TokenTypes.ExclamationEquals, position: { start: i, end: i + 1 }, raw: tokens.consumeTwo() });
+                continue;
+            case ">=":
+                output.push({ type: TokenTypes.GreaterThanEquals, position: { start: i, end: i + 1 }, raw: tokens.consumeTwo() });
+                continue;
+            case "<=":
+                output.push({ type: TokenTypes.LessThanEquals, position: { start: i, end: i + 1 }, raw: tokens.consumeTwo() });
+                continue;
+            case "+=":
+                output.push({ type: TokenTypes.PlusEquals, position: { start: i, end: i + 1 }, raw: tokens.consumeTwo() });
+                continue;
+            case "-=":
+                output.push({ type: TokenTypes.MinusEquals, position: { start: i, end: i + 1 }, raw: tokens.consumeTwo() });
+                continue;
+            case "*=":
+                output.push({ type: TokenTypes.StarEquals, position: { start: i, end: i + 1 }, raw: tokens.consumeTwo() });
+                continue;
+            case "/=":
+                output.push({ type: TokenTypes.SlashEquals, position: { start: i, end: i + 1 }, raw: tokens.consumeTwo() });
+                continue;
+            case "++":
+                output.push({ type: TokenTypes.PlusPlus, position: { start: i, end: i + 1 }, raw: tokens.consumeTwo() });
+                continue;
+            case "--":
+                output.push({ type: TokenTypes.MinusMinus, position: { start: i, end: i + 1 }, raw: tokens.consumeTwo() });
+                continue;
+            case "||":
+                output.push({ type: TokenTypes.PipePipe, position: { start: i, end: i + 1 }, raw: tokens.consumeTwo() });
+                continue;
+            case "&&":
+                output.push({ type: TokenTypes.AmpersandAmpersand, position: { start: i, end: i + 1 }, raw: tokens.consumeTwo() });
+                continue;
+            case "<<":
+                output.push({ type: TokenTypes.LessThanLessThan, position: { start: i, end: i + 1 }, raw: tokens.consumeTwo() });
+                continue;
+            case ">>":
+                output.push({ type: TokenTypes.GreaterThanGreaterThan, position: { start: i, end: i + 1 }, raw: tokens.consumeTwo() });
+                continue;
+            case "**":
+                output.push({ type: TokenTypes.StarStar, position: { start: i, end: i + 1 }, raw: tokens.consumeTwo() });
+                continue;
+            case "->":
+                output.push({ type: TokenTypes.MinusGreaterThan, position: { start: i, end: i + 1 }, raw: tokens.consumeTwo() });
+                continue;
+            default: // do nothing
         }
 
         // Single-character operators
-        // These are operators that are only one character long.
-        // Examples of these are +, -, *, /, etc.
-        if (singleCharOperators.includes(tokens.current())) {
-            output.push([tokens.consume(), { type: TokenTypes.Operator, position: { start: i - 1, end: i - 1 } }]);
-            continue;
+        // '"+-*/%=!<>(){}[],;:.'.split("");
+        switch (tokens.current()) {
+            case "+":
+                output.push({ type: TokenTypes.Plus, position: { start: i, end: i }, raw: tokens.consume() });
+                continue;
+            case "-":
+                output.push({ type: TokenTypes.Minus, position: { start: i, end: i }, raw: tokens.consume() });
+                continue;
+            case "*":
+                output.push({ type: TokenTypes.Star, position: { start: i, end: i }, raw: tokens.consume() });
+                continue;
+            case "/":
+                output.push({ type: TokenTypes.Slash, position: { start: i, end: i }, raw: tokens.consume() });
+                continue;
+            case "%":
+                output.push({ type: TokenTypes.Percent, position: { start: i, end: i }, raw: tokens.consume() });
+                continue;
+            case "=":
+                output.push({ type: TokenTypes.Equals, position: { start: i, end: i }, raw: tokens.consume() });
+                continue;
+            case "!":
+                output.push({ type: TokenTypes.Exclamation, position: { start: i, end: i }, raw: tokens.consume() });
+                continue;
+            case "<":
+                output.push({ type: TokenTypes.LessThan, position: { start: i, end: i }, raw: tokens.consume() });
+                continue;
+            case ">":
+                output.push({ type: TokenTypes.GreaterThan, position: { start: i, end: i }, raw: tokens.consume() });
+                continue;
+            case "(":
+                output.push({ type: TokenTypes.LeftParen, position: { start: i, end: i }, raw: tokens.consume() });
+                continue;
+            case ")":
+                output.push({ type: TokenTypes.RightParen, position: { start: i, end: i }, raw: tokens.consume() });
+                continue;
+            case "{":
+                output.push({ type: TokenTypes.LeftBrace, position: { start: i, end: i }, raw: tokens.consume() });
+                continue;
+            case "}":
+                output.push({ type: TokenTypes.RightBrace, position: { start: i, end: i }, raw: tokens.consume() });
+                continue;
+            case "[":
+                output.push({ type: TokenTypes.LeftBracket, position: { start: i, end: i }, raw: tokens.consume() });
+                continue;
+            case "]":
+                output.push({ type: TokenTypes.RightBracket, position: { start: i, end: i }, raw: tokens.consume() });
+                continue;
+            case ",":
+                output.push({ type: TokenTypes.Comma, position: { start: i, end: i }, raw: tokens.consume() });
+                continue;
+            case ";":
+                output.push({ type: TokenTypes.Semicolon, position: { start: i, end: i }, raw: tokens.consume() });
+                continue;
+            case ":":
+                output.push({ type: TokenTypes.Colon, position: { start: i, end: i }, raw: tokens.consume() });
+                continue;
+            case ".":
+                output.push({ type: TokenTypes.Dot, position: { start: i, end: i }, raw: tokens.consume() });
+                continue;
+            default: // do nothing
         }
 
         // Anything else is an OTHER
-        output.push([tokens.consume(), { type: TokenTypes.Other, position: { start: i - 1, end: i - 1 } }]);
+        output.push({ type: TokenTypes.Other, position: { start: i, end: i }, raw: tokens.consume() });
     }
     if (issues.length) return { ok: false, issues, tokens: null };
     else return { ok: true, issues: [], tokens: output };
