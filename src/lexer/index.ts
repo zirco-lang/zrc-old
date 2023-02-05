@@ -355,7 +355,6 @@ export default function lex(input: string): LexerOutput {
         }
 
         // Single-character operators
-        // '"+-*/%=!<>(){}[],;:.'.split("");
         switch (tokens.current()) {
             case "+":
                 output.push({ type: TokenTypes.Plus, position: { start: i, end: i }, raw: tokens.consume() });

@@ -18,7 +18,7 @@
 
 import type { FailedLexerOutput, OKLexerOutput } from "../../lexer/index";
 import lex from "../../lexer/index";
-import type { NameToken, NumberToken, OtherToken, PlusToken, SlashToken, StarToken, StringToken, Token } from "../../lexer/tokens";
+import type { NameToken, NumberToken, OtherToken, StringToken, Token, TokenTypeWithoutValue, TokenWithoutValue } from "../../lexer/tokens";
 import { TokenTypes } from "../../lexer/tokens";
 import ZircoSyntaxError, { ZircoSyntaxErrorTypes } from "../../lib/structures/errors/ZircoSyntaxError";
 import type Interval from "../../lib/types/Interval";
@@ -36,9 +36,47 @@ const interval = (start: number, end: number): Interval => ({ start, end });
 const name = (name: string, position: Interval): NameToken => ({ type: TokenTypes.Name, raw: name, value: name, position });
 const number = (value: number, raw: string, position: Interval): NumberToken => ({ type: TokenTypes.Number, raw, value, position });
 const string = (value: string, raw: string, position: Interval): StringToken => ({ type: TokenTypes.String, raw, value, position });
-const plus = (position: Interval): PlusToken => ({ type: TokenTypes.Plus, raw: "+", position });
-const star = (position: Interval): StarToken => ({ type: TokenTypes.Star, raw: "*", position });
-const slash = (position: Interval): SlashToken => ({ type: TokenTypes.Slash, raw: "/", position });
+
+const tokenWithoutValueFactory =
+    <T extends TokenTypeWithoutValue>(type: T, raw: string) =>
+    (position: Interval): TokenWithoutValue<T> => ({ type, raw, position });
+
+const plus = tokenWithoutValueFactory(TokenTypes.Plus, "+");
+const minus = tokenWithoutValueFactory(TokenTypes.Minus, "-");
+const star = tokenWithoutValueFactory(TokenTypes.Star, "*");
+const slash = tokenWithoutValueFactory(TokenTypes.Slash, "/");
+const percent = tokenWithoutValueFactory(TokenTypes.Percent, "%");
+const equals = tokenWithoutValueFactory(TokenTypes.Equals, "=");
+const exclamation = tokenWithoutValueFactory(TokenTypes.Exclamation, "!");
+const lessThan = tokenWithoutValueFactory(TokenTypes.LessThan, "<");
+const greaterThan = tokenWithoutValueFactory(TokenTypes.GreaterThan, ">");
+const leftParen = tokenWithoutValueFactory(TokenTypes.LeftParen, "(");
+const rightParen = tokenWithoutValueFactory(TokenTypes.RightParen, ")");
+const leftBrace = tokenWithoutValueFactory(TokenTypes.LeftBrace, "{");
+const rightBrace = tokenWithoutValueFactory(TokenTypes.RightBrace, "}");
+const leftBracket = tokenWithoutValueFactory(TokenTypes.LeftBracket, "[");
+const rightBracket = tokenWithoutValueFactory(TokenTypes.RightBracket, "]");
+const comma = tokenWithoutValueFactory(TokenTypes.Comma, ",");
+const dot = tokenWithoutValueFactory(TokenTypes.Dot, ".");
+const colon = tokenWithoutValueFactory(TokenTypes.Colon, ":");
+const semicolon = tokenWithoutValueFactory(TokenTypes.Semicolon, ";");
+const plusEquals = tokenWithoutValueFactory(TokenTypes.PlusEquals, "+=");
+const minusEquals = tokenWithoutValueFactory(TokenTypes.MinusEquals, "-=");
+const starEquals = tokenWithoutValueFactory(TokenTypes.StarEquals, "*=");
+const slashEquals = tokenWithoutValueFactory(TokenTypes.SlashEquals, "/=");
+const doubleEquals = tokenWithoutValueFactory(TokenTypes.EqualsEquals, "==");
+const bangEquals = tokenWithoutValueFactory(TokenTypes.ExclamationEquals, "!=");
+const lessEquals = tokenWithoutValueFactory(TokenTypes.LessThanEquals, "<=");
+const greaterEquals = tokenWithoutValueFactory(TokenTypes.GreaterThanEquals, ">=");
+const doublePlus = tokenWithoutValueFactory(TokenTypes.PlusPlus, "++");
+const doubleMinus = tokenWithoutValueFactory(TokenTypes.MinusMinus, "--");
+const doubleAmpersand = tokenWithoutValueFactory(TokenTypes.AmpersandAmpersand, "&&");
+const doublePipe = tokenWithoutValueFactory(TokenTypes.PipePipe, "||");
+const doubleStar = tokenWithoutValueFactory(TokenTypes.StarStar, "**");
+const doubleLessThan = tokenWithoutValueFactory(TokenTypes.LessThanLessThan, "<<");
+const doubleGreaterThan = tokenWithoutValueFactory(TokenTypes.GreaterThanGreaterThan, ">>");
+const minusGreaterThan = tokenWithoutValueFactory(TokenTypes.MinusGreaterThan, "->");
+
 const other = (raw: string, position: Interval): OtherToken => ({ type: TokenTypes.Other, raw, position });
 
 describe("lex", () => {
@@ -201,5 +239,48 @@ describe("lex", () => {
                     new ZircoSyntaxError(ZircoSyntaxErrorTypes.UnclosedString, interval(3, 9), {})
                 ])
             ));
+    });
+
+    describe("operators and such", () => {
+        const cases: [string, (position: Interval) => TokenWithoutValue<TokenTypeWithoutValue>, string][] = [
+            ["+", plus, "plus"],
+            ["-", minus, "minus"],
+            ["*", star, "star"],
+            ["/", slash, "slash"],
+            ["%", percent, "percent"],
+            ["=", equals, "equals"],
+            ["!", exclamation, "exclamation"],
+            ["<", lessThan, "lessThan"],
+            [">", greaterThan, "greaterThan"],
+            ["(", leftParen, "leftParen"],
+            [")", rightParen, "rightParen"],
+            ["{", leftBrace, "leftBrace"],
+            ["}", rightBrace, "rightBrace"],
+            ["[", leftBracket, "leftBracket"],
+            ["]", rightBracket, "rightBracket"],
+            [",", comma, "comma"],
+            [";", semicolon, "semicolon"],
+            [":", colon, "colon"],
+            [".", dot, "dot"],
+            ["==", doubleEquals, "doubleEquals"],
+            ["!=", bangEquals, "bangEquals"],
+            ["<=", lessEquals, "lessEquals"],
+            [">=", greaterEquals, "greaterEquals"],
+            ["+=", plusEquals, "plusEquals"],
+            ["-=", minusEquals, "minusEquals"],
+            ["*=", starEquals, "starEquals"],
+            ["/=", slashEquals, "slashEquals"],
+            ["++", doublePlus, "doublePlus"],
+            ["--", doubleMinus, "doubleMinus"],
+            ["&&", doubleAmpersand, "doubleAmpersand"],
+            ["||", doublePipe, "doublePipe"],
+            ["**", doubleStar, "doubleStar"],
+            ["<<", doubleLessThan, "doubleLessThan"],
+            [">>", doubleGreaterThan, "doubleGreaterThan"],
+            ["->", minusGreaterThan, "minusGreaterThan"]
+        ];
+
+        for (const [input, builder, name] of cases)
+            it(name, () => expect(lex(input)).toEqual(lexerOKResult([builder(interval(0, input.length - 1))])));
     });
 });

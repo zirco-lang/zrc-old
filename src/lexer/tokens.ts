@@ -107,11 +107,15 @@ export interface BaseToken {
     position: Interval;
 }
 
-interface TokenWithoutValue<T extends TokenTypes> extends BaseToken {
+export type TokenTypeWithValue = TokenTypes.Name | TokenTypes.Number | TokenTypes.String;
+export type TokenTypeWithoutValue = Exclude<TokenTypes, TokenTypeWithValue>;
+
+export interface TokenWithoutValue<T extends TokenTypeWithoutValue> extends BaseToken {
     type: T;
 }
 
-interface TokenWithValue<T extends TokenTypes, V> extends TokenWithoutValue<T> {
+export interface TokenWithValue<T extends TokenTypeWithValue, V> extends BaseToken {
+    type: T;
     value: V;
 }
 
@@ -155,43 +159,7 @@ export type StarStarToken = TokenWithoutValue<TokenTypes.StarStar>;
 export type MinusGreaterThanToken = TokenWithoutValue<TokenTypes.MinusGreaterThan>;
 export type OtherToken = TokenWithoutValue<TokenTypes.Other>;
 
-export type Token =
-    | NameToken
-    | NumberToken
-    | StringToken
-    | PlusToken
-    | MinusToken
-    | StarToken
-    | SlashToken
-    | PercentToken
-    | EqualsToken
-    | ExclamationToken
-    | LessThanToken
-    | GreaterThanToken
-    | LeftParenToken
-    | RightParenToken
-    | LeftBraceToken
-    | RightBraceToken
-    | LeftBracketToken
-    | RightBracketToken
-    | CommaToken
-    | SemicolonToken
-    | ColonToken
-    | DotToken
-    | EqualsEqualsToken
-    | ExclamationEqualsToken
-    | GreaterThanEqualsToken
-    | LessThanEqualsToken
-    | PlusEqualsToken
-    | MinusEqualsToken
-    | StarEqualsToken
-    | SlashEqualsToken
-    | PlusPlusToken
-    | MinusMinusToken
-    | PipePipeToken
-    | AmpersandAmpersandToken
-    | LessThanLessThanToken
-    | GreaterThanGreaterThanToken
-    | StarStarToken
-    | MinusGreaterThanToken
-    | OtherToken;
+export type ValueLessToken = TokenWithoutValue<TokenTypeWithoutValue>;
+export type ValueToken = NumberToken | StringToken | NameToken;
+
+export type Token = ValueLessToken | ValueToken;
