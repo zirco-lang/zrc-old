@@ -56,6 +56,11 @@ export interface OKLexerOutput {
 
 export type LexerOutput = FailedLexerOutput | OKLexerOutput;
 
+// Define a bunch of lists used later on now, for performance.
+const singleCharOperators = "+-*/%=!<>(){}[],;:.".split("");
+const multiCharOperators = ["==", "!=", ">=", "<=", "+=", "-=", "*=", "/=", "++", "--", "||", "&&", "<<", ">>", "**", "->"];
+const panicTokenBoundaries = ['"', ...singleCharOperators];
+
 export default function lex(input: string): LexerOutput {
     const tokens: Token[] = [];
     const issues: ZircoIssue<ZircoIssueTypes>[] = [];
@@ -63,10 +68,6 @@ export default function lex(input: string): LexerOutput {
     let previousI = -1;
     const length = input.length;
 
-    // Define a bunch of lists used later on now, for performance.
-    const singleCharOperators = "+-*/%=!<>(){}[],;:.".split("");
-    const multiCharOperators = ["==", "!=", ">=", "<=", "+=", "-=", "*=", "/=", "++", "--", "||", "&&", "<<", ">>", "**", "->"];
-    const panicTokenBoundaries = ['"', ...singleCharOperators];
     /**
      * Puts the lexer into "panic mode." Call this function when encountering an error
      * to allow a best-effort mechanism at reaching the next token and proceeding.
