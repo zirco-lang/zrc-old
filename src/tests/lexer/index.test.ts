@@ -16,8 +16,6 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import "../../../setupJest";
-
 import type { FailedLexerOutput, OKLexerOutput, Token } from "../../lexer/index";
 import lex, { TokenTypes } from "../../lexer/index";
 import ZircoSyntaxError, { ZircoSyntaxErrorTypes } from "../../lib/structures/errors/ZircoSyntaxError";
