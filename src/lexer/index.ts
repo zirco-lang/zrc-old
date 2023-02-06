@@ -155,9 +155,9 @@ export default function lex(input: string): LexerOutput {
                 break lexerLoop;
             }
 
-            const matchReg = typeOfLiteral === "binary" ? /[01]/ : /[0-9a-fA-F]/;
+            const matchReg = typeOfLiteral === "binary" ? /[01_]/ : /[0-9a-fA-F_]/;
 
-            while (/[a-zA-Z0-9]/.test(tokens.current())) {
+            while (/[a-zA-Z0-9_]/.test(tokens.current())) {
                 if (!matchReg.test(tokens.current())) {
                     addIssue(
                         new ZircoSyntaxError(
@@ -178,7 +178,6 @@ export default function lex(input: string): LexerOutput {
             output.push({
                 type: TokenTypes.Number,
                 raw: str,
-                value: parseInt(str.substring(2), typeOfLiteral === "binary" ? 2 : 16),
                 position: { start, end: i - 1 }
             });
             continue;
@@ -226,7 +225,7 @@ export default function lex(input: string): LexerOutput {
                 continue;
             }
 
-            output.push({ type: TokenTypes.Number, raw: str, value: parseFloat(str.replace(/_/g, "")), position: { start, end: i - 1 } });
+            output.push({ type: TokenTypes.Number, raw: str, position: { start, end: i - 1 } });
             continue;
         }
 

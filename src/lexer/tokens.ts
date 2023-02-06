@@ -107,7 +107,10 @@ export interface BaseToken {
     position: Interval;
 }
 
-export type TokenTypeWithValue = TokenTypes.Name | TokenTypes.Number | TokenTypes.String;
+// Originally numbers also held values, but this was removed because the lexer should not need to be responsible
+// about determining the value of a number literal, alongside the issues of large numbers not being passed to the
+// parser correctly (& bigints are slow)
+export type TokenTypeWithValue = TokenTypes.Name | TokenTypes.String;
 export type TokenTypeWithoutValue = Exclude<TokenTypes, TokenTypeWithValue>;
 
 export interface TokenWithoutValue<T extends TokenTypeWithoutValue> extends BaseToken {
@@ -121,7 +124,6 @@ export interface TokenWithValue<T extends TokenTypeWithValue, V> extends BaseTok
 
 export interface TokenTypeValues {
     [TokenTypes.Name]: string;
-    [TokenTypes.Number]: number;
     [TokenTypes.String]: string;
 }
 
@@ -133,4 +135,4 @@ export type Tokens = {
     [k in TokenTypeWithoutValue]: TokenWithoutValue<k>;
 } & {
     [k in TokenTypeWithValue]: TokenWithValue<k, TokenTypeValues[k]>;
-}
+};
